@@ -46,10 +46,3 @@ export function observedCount(tl, offset, activeMs, i) {
   }
   return Math.max(0, n);
 }
-export function displayKind(phase) {
-  return phase.kind === 'refuge' ? 'prostration' : phase.kind;
-}
-export function duration(ms) {
-  const s = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}

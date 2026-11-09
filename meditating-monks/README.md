@@ -4,18 +4,16 @@
 
 Ein selbst hostbarer digitaler Meditationsraum: Viele stilisierte Mönche durchlaufen zeitversetzt einen strukturierten Zyklus mit Ausrichtung, Niederwerfungen, Darbringungen, Mani-Rezitation und Widmung. Ohne LLM, Konten, Tracking oder laufende Tokenkosten.
 
-**Version 0.1.0 · Entwicklungsprototyp, kein extern auditiertes Produktionsrelease.** Die Figuren sind digitale Darstellungen. Die Software beansprucht weder Bewusstsein noch Ordination, Meditationserfahrung oder messbares spirituelles Verdienst. Menschliche Praxis bleibt eigenständig.
+**Version 0.2.1.** Die Figuren sind digitale Darstellungen. Die Software beansprucht weder Bewusstsein noch Ordination, Meditationserfahrung oder messbares spirituelles Verdienst. Menschliche Praxis bleibt eigenständig.
 
 ## Was funktioniert
 
-- 108 digitale Mönche standardmäßig; konfigurierbar von 1 bis 5.000. Ein gemeinsamer Scheduler, keine VM pro Figur.
-- Ausführbares öffentliches Profil mit 14 Phasen, 28:13 Minuten Gesamtdauer und 108 Mani-Wiederholungen je vollständiger Mani-Phase. Diese Zeiten sind Designentscheidungen.
-- Responsive Oberfläche, Einzelansicht, Aktivitätsfilter, Seitenwechsel, animierte Verbeugungen und symbolische Darbringungen.
+- Standardmäßig 108 digitale Mönche in einem gemeinsamen Takt mit stabilen Startversätzen bis 1.200 ms. Die Instanz unterstützt 1 bis 5.000 Figuren mit einem gemeinsamen Scheduler.
+- Öffentliches Praxisprofil mit 14 Phasen und 108 Mani-Wiederholungen je vollständiger Mani-Phase.
+- Bildschirmfüllender Ritualraum mit bis zu 108 Plätzen. Im Hochformat ordnen sich die Figuren in schmaleren Reihen an. Die Szene berücksichtigt die Systemeinstellung für reduzierte Bewegung.
 - SQLite-Persistenz, konservative Heartbeat-Zeit, keine Nachzählung von Server-Ausfallzeiten; keine fiktive Vorgeschichte bei zeitversetztem Start.
 - Live-Status per Server-Sent Events; Polling-Fallback; veraltete Anzeige friert ein und Audio stoppt.
-- Audio auf Knopfdruck aus eigenen freigegebenen Aufnahmen; optional drei geschichtete virtuelle Stimmen. Keine Aufnahme mitgeliefert.
-- Separat beschriftete lokale Browser-TTS-Demo. Aussprache nicht authentifiziert.
-- Persönliche, manuell bediente Mala im Browser, getrennt von allen Server-Zählern.
+- Freigegebene Aufnahmen lassen sich durch Antippen der Szene oder per Tastatur ein- und ausschalten. Der Raumchor nutzt bis zu 108 Quellen und im schmalen Hochformat bis zu 12. Das Repository liefert keine Rezitationsaufnahmen mit.
 - Opt-in-Föderation mit bekannten öffentlichen Schlüsseln, signierten Meldungen, Ablaufzeit und Replay-Abwehr. Kein ungeprüftes weltweites Verzeichnis.
 - Download des tatsächlich gebündelten Quellcodes über `/source`; private Konfiguration und Schlüssel sind ausgeschlossen.
 
@@ -26,22 +24,24 @@ Die Longchen-Nyingtik-Datei ist **eine nicht ausführbare Strukturvorlage**, kei
 Voraussetzung: Python 3.13 unter Linux/macOS. Unter Windows den Docker-Weg verwenden; die Laufzeitsperre nutzt POSIX `flock`.
 
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-lock.txt
-cp config/node.example.json config/node.json
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+python -m pip install -r requirements-lock.txt
+test -f config/node.json || cp config/node.example.json config/node.json
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log --timeout-graceful-shutdown 5
 ```
 
-Dann `http://localhost:8000` öffnen. Kein API-Key nötig. Die Textdarstellung funktioniert ohne Audio. Für die Sprech-Demo im Player „Lokale TTS“ auswählen; die verfügbaren Stimmen hängen vom Betriebssystem und Browser ab.
+Dann `http://localhost:8000` öffnen. Die Szene startet still. Sobald Aufnahmen hinterlegt sind, lässt sich der Ton direkt im Raum aktivieren. Mit der Tastatur führt Tab zum Raum und Enter oder Leertaste schalten den Ton um.
 
 **Immer genau einen Worker starten.** Der Scheduler ist absichtlich ein Single Writer. Mehrere Worker auf demselben Datenordner werden blockiert, statt Zähler doppelt fortzuschreiben.
+
+Beim Stoppen begrenzt Uvicorn das Warten auf offene Live-Verbindungen auf fünf Sekunden. Danach schreibt der Scheduler seinen letzten Stand in SQLite.
 
 ## Lokal starten: Docker Compose
 
 ```bash
-cp config/node.example.json config/node.json
-cp config/peers.example.json config/peers.json
+test -f config/node.json || cp config/node.example.json config/node.json
+test -f config/peers.json || cp config/peers.example.json config/peers.json
 docker compose up -d --build
 ```
 
@@ -50,7 +50,7 @@ Die Anwendung ist unter `http://localhost:8000` erreichbar. Docker verwendet ein
 ## Eigene Domain
 
 ```bash
-cp .env.example .env
+test -f .env || cp .env.example .env
 # In .env MM_DOMAIN auf deinen echten Hostnamen ändern.
 # DNS A/AAAA und eingehende Ports 80/443 passend konfigurieren.
 docker compose -f compose.yaml -f compose.production.yaml up -d --build
@@ -74,7 +74,7 @@ Caddy übernimmt HTTPS. Vollständige Anleitung und Einschränkungen: `docs/DEPL
 }
 ```
 
-Name und Widmung lassen sich nach einem Neustart ändern. Änderungen an Mönchszahl oder Praxisprofil erfordern einen neuen Lauf. Bestehende Zahlen werden nicht stillschweigend auf eine andere Konfiguration umgerechnet:
+Name und Widmung lassen sich nach einem Neustart ändern. Änderungen an Mönchszahl, Praxisprofil oder Ensemble erfordern einen neuen Lauf. Der vorherige Lauf behält seine Zähler:
 
 ```bash
 # Dienst zuerst stoppen.
@@ -91,16 +91,16 @@ Für Docker: `docker compose stop monastery`, dann `docker compose run --rm --no
 ## Tests
 
 ```bash
-pip install -r requirements-dev.txt
+python -m pip install -r requirements-lock.txt -r requirements-dev.txt
 python -m pytest -q
 npm test
 python scripts/benchmark.py
-# Optional: tatsächliche Oberfläche in Chromium mit expliziten API-/TTS-Fixtures prüfen.
-playwright install chromium
+# Browser-Smoke-Test gegen die lokale Anwendung mit isolierten Testdaten.
+python -m playwright install chromium
 python scripts/browser_smoke.py
 ```
 
-Node.js ≥20 ist nur für die vier Browser-Logiktests nötig, nicht für den Betrieb. Die ausführlichen Ergebnisse und Grenzen stehen in `docs/TEST_REPORT.de.md`.
+Node.js ≥20 ist für die JavaScript-Tests und den Python/JavaScript-Paritätstest erforderlich. Für den Betrieb genügt die Python-Umgebung. Frühere Testergebnisse stehen in `docs/TEST_REPORT.de.md`.
 
 ## Dokumentation
 
@@ -108,4 +108,4 @@ Node.js ≥20 ist nur für die vier Browser-Logiktests nötig, nicht für den Be
 
 ## Veröffentlichung
 
-Dieses Verzeichnis ist ein vorbereitetes Repository, noch kein veröffentlichtes GitHub-Projekt. Prüfe Lizenzwahl, Texte, Sicherheit und tatsächliche Rechte an später ergänzten Medien vor dem öffentlichen Betrieb. Keine Schlüssel, Datenbanken, `.env` oder private Konfiguration committen. Code und eigene redaktionelle Texte: AGPL-3.0-only; siehe `LICENSE`. Fremde Texte und Aufnahmen werden dadurch nicht automatisch mitlizenziert.
+Der [Quellcode liegt auf GitHub](https://github.com/noxpublishing/108monks). Der aktuelle Betrieb einer eigenen Instanz und ein öffentlicher Pilot haben eigene Abnahmeschritte in `docs/DEPLOYMENT.de.md` und `docs/ROADMAP.de.md`. Schlüssel, Datenbanken, `.env` und private Konfiguration gehören auf das Betreibersystem. Für Code und eigene redaktionelle Texte gilt AGPL-3.0-only, siehe `LICENSE` und `LICENSES.md`.

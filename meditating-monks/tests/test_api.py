@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.federation import Identity, Peer
+from app.source import build_source_archive
 
 @pytest.fixture
 def client(settings):
@@ -71,6 +72,21 @@ def test_source_offer_excludes_runtime_secrets(client):
         assert 'meditating-monks/app/engine.py' in names
         assert 'meditating-monks/SOURCE_MANIFEST.json' in names
         assert not any(name.endswith(('identity.ed25519','node.json','peers.json','.env')) or '/data/' in name for name in names)
+
+def test_source_archive_rejects_symlinks_to_private_runtime_files(tmp_path):
+    root = tmp_path / 'app'
+    private = root / 'data'
+    private.mkdir(parents=True)
+    (private / 'identity.ed25519').write_text('synthetic private file')
+    web = root / 'web'
+    web.mkdir()
+    (web / 'style.css').symlink_to(private / 'identity.ed25519')
+    (root / 'SOURCE_MANIFEST.json').write_text(json.dumps(['web/style.css']))
+    archive = tmp_path / 'source.zip'
+
+    with pytest.raises(ValueError, match='Invalid source file'):
+        build_source_archive(root, archive)
+    assert list(tmp_path.iterdir()) == [root]
 
 def test_health_fails_for_stale_heartbeat(client):
     client.app.state.rt.snapshot['updated_at_ms']=0

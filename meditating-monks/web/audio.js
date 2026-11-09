@@ -1,232 +1,289 @@
-/** On-demand audio only. No autoplay; no external TTS provider or voice cloning. */
+/** On-demand room recordings. */
 export class AudioRoom {
   constructor(status) {
-    this.status = status; this.context = null; this.bufferCache = new Map();
-    this.layers = []; this.enabled = false; this.mode = 'recording';
-    this.volume = 0.45; this.voice = null; this.generation = 0;
-    this.activeKey = ''; this.lastSpokenKey = '';
-    /* Raumchor (Ritualraum-Konzept §4): bis zu 108 virtuelle Wiedergabepositionen
-       derselben Aufnahmen, stabil je Sitz versetzt, Hintergrund tiefpassgefiltert. */
-    this.choirMode = 'off'; this.choirMap = []; this.choirLayers = [];
-    this.choirKey = ''; this.choirGraph = null; this.bgLevel = 0.056;
+    this.status = status;
+    this.context = null;
+    this.bufferCache = new Map();
+    this.enabled = false;
+    this.ready = false;
+    this.generation = 0;
+    this.focus = null;
+    this.choir = null;
+    this.choirMode = 'off';
+    this.choirMap = [];
+    this.choirLayers = new Map();
+    this.choirGraph = null;
   }
-  localVoices() {
-    return ('speechSynthesis' in window) ? speechSynthesis.getVoices().filter(v => v.localService) : [];
-  }
-  setVolume(value) {
-    this.volume = value;
-    if (this.master) this.master.gain.setTargetAtTime(value, this.context.currentTime, 0.05);
-  }
-  async start(mode, voice) {
-    this.stop(); this.enabled = true; this.mode = mode; this.voice = voice;
-    if (mode === 'tts') {
-      if (!('speechSynthesis' in window) || !voice?.localService) {
-        this.enabled = false; throw new Error('Keine vom Browser als lokal markierte TTS-Stimme verfügbar. Hinterlege eine freigegebene Aufnahme.');
+
+  async start() {
+    this.stop();
+    const generation = this.generation;
+    this.enabled = true;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) throw new Error('Web Audio wird in diesem Browser nicht unterstützt.');
+      if (!this.context) {
+        this.context = new AudioContext();
+        this.master = this.context.createGain();
+        this.master.gain.value = .45;
+        const limiter = this.context.createDynamicsCompressor();
+        this.master.connect(limiter);
+        limiter.connect(this.context.destination);
       }
-      this.status('Lokale Sprech-Demo. Keine authentifizierte tibetische Aussprache; nicht exakt mit dem Serverrhythmus synchron.');
-      return;
+      await this.context.resume();
+    } catch (error) {
+      if (generation !== this.generation) return false;
+      this.stop();
+      throw error;
     }
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) { this.enabled = false; throw new Error('Web Audio wird in diesem Browser nicht unterstützt.'); }
-    if (!this.context) {
-      this.context = new AudioContext(); this.master = this.context.createGain();
-      this.limiter = this.context.createDynamicsCompressor(); this.master.connect(this.limiter); this.limiter.connect(this.context.destination);
-    }
-    this.master.gain.value = this.volume;
-    await this.context.resume();
-    this.status('Aufnahme wird beim passenden Abschnitt zugeschaltet.');
+    if (generation !== this.generation) return false;
+    this.ready = true;
+    this.status('Der Ton setzt ein, sobald eine Aufnahme zum Abschnitt verfügbar ist.');
+    return true;
   }
-  stopLayers() {
-    this.stopFocus(); this.stopChoir();
+
+  stopLayer({ source, gain, ended }) {
+    if (ended) return;
+    const now = this.context.currentTime;
+    gain.gain.setTargetAtTime(0, now, .04);
+    source.stop(now + .2);
   }
+
   stopFocus() {
-    for (const { source, gain } of this.layers) {
-      try { gain.gain.setTargetAtTime(0, this.context.currentTime, .04); source.stop(this.context.currentTime + .2); } catch (_) {}
-    }
-    this.layers = []; this.activeKey = '';
+    const layer = this.focus?.layer;
+    this.focus = null;
+    if (layer) this.stopLayer(layer);
   }
+
   stopChoir() {
-    for (const { source, gain } of this.choirLayers) {
-      try { gain.gain.setTargetAtTime(0, this.context.currentTime, .04); source.stop(this.context.currentTime + .2); } catch (_) {}
-    }
-    this.choirLayers = []; this.choirKey = '';
-    if (this.choirGraph) {
-      try { this.choirGraph.bgGain.gain.setTargetAtTime(0, this.context.currentTime, .08); } catch (_) {}
-      this.choirGraph = null;
-    }
+    this.choir = null;
+    for (const layer of this.choirLayers.values()) this.stopLayer(layer);
+    this.choirLayers.clear();
   }
-  /* Regler und Modi: Hintergrund live änderbar, Choraufbau im nächsten Takt. */
-  setBgLevel(value) {
-    this.bgLevel = value;
-    if (this.choirGraph && this.context) this.choirGraph.bgGain.gain.setTargetAtTime(value, this.context.currentTime, .08);
+
+  setChoirMode(mode) {
+    if (this.choirMode === mode) return;
+    this.choirMode = mode;
+    this.stopChoir();
+    if (mode === 'off' && this.focus?.layer && !this.focus.once) this.recordingStatus(this.focus.record);
   }
-  setChoirMode(mode) { this.choirMode = mode; this.choirKey = ''; }
-  setChoirMap(map) { this.choirMap = map; this.choirKey = ''; }
+
+  setChoirMap(map) {
+    this.choirMap = map;
+    this.stopChoir();
+  }
+
   stop() {
-    this.enabled = false; this.generation++; this.stopLayers(); this.lastSpokenKey = '';
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    this.enabled = false;
+    this.ready = false;
+    this.generation++;
+    this.stopFocus();
+    this.stopChoir();
   }
-  async load(record) {
-    if (this.bufferCache.has(record.url)) return this.bufferCache.get(record.url);
+
+  load(record) {
+    if (!this.bufferCache.has(record.url)) {
+      const pending = this.fetchBuffer(record).catch(error => {
+        this.bufferCache.delete(record.url);
+        throw error;
+      });
+      this.bufferCache.set(record.url, pending);
+    }
+    return this.bufferCache.get(record.url);
+  }
+
+  async fetchBuffer(record) {
     const response = await fetch(record.url, { credentials: 'same-origin' });
     if (!response.ok) throw new Error('Die Audiodatei konnte nicht geladen werden.');
     const bytes = await response.arrayBuffer();
     if (bytes.byteLength > 50 * 1024 * 1024) throw new Error('Die Aufnahme ist für diesen Player zu groß.');
-    const buffer = await this.context.decodeAudioData(bytes);
-    this.bufferCache.set(record.url, buffer); return buffer;
+    return this.context.decodeAudioData(bytes);
   }
-  async update(positions, catalog, runKey) {
-    if (!this.enabled) return;
-    const first = positions[0];
-    if (!first) return;
-    if (this.mode === 'tts') {
-      const p = first.phase;
-      if (p.kind === 'rest') { if ('speechSynthesis' in window) speechSynthesis.cancel(); return; }
-      const unit = p.unit_ms ? Math.floor(first.elapsed / p.unit_ms) : 0;
-      const key = `${runKey}:${first.monkId}:${p.id}:${first.cycle}:${unit}`;
-      if (key === this.lastSpokenKey) return;
-      this.lastSpokenKey = key;
-      // Avoid overlapping utterances. Timed display counters are not audio counters.
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(p.speech_text || p.text);
-      utterance.voice = this.voice; utterance.lang = this.voice.lang;
-      utterance.rate = .75; utterance.volume = this.volume;
-      utterance.onerror = event => { if (!['canceled', 'interrupted'].includes(event.error)) this.status(`TTS nicht verfügbar: ${event.error}`); };
-      speechSynthesis.speak(utterance); return;
-    }
-    /* Einmalige Gebete (once): eine einzige Stimme, einmal je Abschnittsdurchgang
-       pro Zyklus. Wer später einsteigt, hört ab der aktuellen Stelle; ein bereits
-       beendetes Gebet startet nicht erneut. Der Raumchor bleibt dem Loop vorbehalten. */
-    const p = first.phase;
-    if ((p.audio_mode || 'loop') === 'once') {
-      const record = catalog.find(r => r.id === p.audio_id);
-      const key = `${first.monkId}:${p.id}:${first.cycle}:${record ? record.id : 'none'}`;
-      if (key === this.activeKey) return;
-      this.stopLayers(); this.activeKey = key;
-      if (!record) {
-        this.status('Für diesen Abschnitt ist keine freigegebene Aufnahme hinterlegt. Die Textdarstellung läuft weiter.'); return;
-      }
-      try {
-        const buffer = await this.load(record);
-        if (!this.enabled) return;
-        const start = record.loop_start_seconds, end = record.loop_end_seconds, length = end - start;
-        if (start < 0 || end > buffer.duration + .02)
-          throw new Error('Audio-Abschnitt passt nicht zur Datei. Prüfe die Grenzen im Manifest; kein automatischer Schnitt.');
-        const offset = first.elapsed / 1000;
-        if (offset >= length) {
-          this.status(`${record.title} · in diesem Durchgang bereits beendet; bis zum nächsten Abschnitt bleibt der Kanal still.`);
-          return;
-        }
-        const source = this.context.createBufferSource(), gain = this.context.createGain();
-        source.buffer = buffer;
-        gain.gain.value = 0; gain.gain.setTargetAtTime(.9, this.context.currentTime, .15);
-        source.connect(gain); gain.connect(this.master);
-        source.onended = () => { source.disconnect(); gain.disconnect(); };
-        source.start(0, start + offset);
-        this.layers.push({ source, gain });
-        this.status(`${record.title} · ${record.performer} · ${record.license}`);
-      } catch (error) { this.status(error.message); }
-      return;
-    }
 
-    /* Loop-Phasen: gewählte Stimme vorn (Gain 0,9, mittig); dahinter der Raumchor
-       aus derselben Aufnahme plus geprüften Chorvarianten (keine Tonhöhenänderung). */
+  async update(first, catalog, runKey) {
+    if (!this.ready) return;
+    const p = first.phase;
+    const once = p.audio_mode === 'once';
     const record = catalog.find(r => r.id === p.audio_id);
-    if (!record) {
-      if (this.activeKey !== 'silence' || this.choirLayers.length) {
-        this.stopLayers(); this.activeKey = 'silence';
+    const phaseKey = `${runKey}:${p.id}:${record?.id ?? ''}`;
+    const key = record ? `${phaseKey}:${first.monkId}:${once ? first.cycle : ''}` : 'silence';
+    let focus = this.focus;
+
+    if (focus?.key !== key) {
+      this.stopFocus();
+      if (once || !record || (this.choir && this.choir.phaseKey !== phaseKey)) this.stopChoir();
+      focus = this.focus = { key, first, record, once, layer: null };
+      if (!record) {
         this.status('Für diesen Abschnitt ist keine freigegebene Aufnahme hinterlegt. Die Textdarstellung läuft weiter.');
-      }
-      return;
-    }
-    const focusKey = `${first.monkId}:${p.id}:${record.id}`;
-    if (focusKey !== this.activeKey) {
-      try {
-        const buffer = await this.load(record);
-        if (!this.enabled) return;
-        this.stopFocus(); this.activeKey = focusKey;
-        const start = record.loop_start_seconds, end = record.loop_end_seconds, length = end - start;
-        const expected = (p.unit_ms || p.duration_ms) / 1000;
-        if (end > buffer.duration + .02 || Math.abs(length - expected) > .05)
-          throw new Error('Audio-Loop und Phasentakt passen nicht zusammen. Passe unit_ms und loop_start/end an; es erfolgt kein automatisches Time-Stretching.');
-        this.startFocusLayer(record, buffer, first);
-        this.status(`${record.title} · ${record.performer} · ${record.license}`);
-      } catch (error) {
-        this.stopFocus(); this.activeKey = focusKey;
-        this.status(error.message);
         return;
       }
-    }
-    if (this.choirMode === 'off' || !this.choirMap.length) {
-      if (this.choirLayers.length) this.stopChoir();
-      return;
-    }
-    await this.updateChoir(first, record, catalog);
-  }
-
-  startFocusLayer(record, buffer, first) {
-    const source = this.context.createBufferSource(), gain = this.context.createGain();
-    const length = record.loop_end_seconds - record.loop_start_seconds;
-    source.buffer = buffer; source.loop = true;
-    source.loopStart = record.loop_start_seconds; source.loopEnd = record.loop_end_seconds;
-    gain.gain.value = 0; gain.gain.setTargetAtTime(.9, this.context.currentTime, .15);
-    source.connect(gain); gain.connect(this.master);
-    source.onended = () => { source.disconnect(); gain.disconnect(); };
-    source.start(0, record.loop_start_seconds + (first.elapsed / 1000) % length);
-    this.layers.push({ source, gain });
-  }
-
-  /** Raumchor: bis zu 108 virtuelle Wiedergabepositionen derselben Aufnahme(n).
-      Jede Quelle sitzt fest, startet stable versetzt (Cohort-Versatz des Platzes
-      im Loop), wird nach Sitzspalte panoriert und über den gemeinsamen
-      Hintergrund-Tiefpass (1,8 kHz) gelegt; hinten bleibt es leiser. */
-  async updateChoir(first, record, catalog) {
-    const p = first.phase;
-    const expected = (p.unit_ms || p.duration_ms) / 1000;
-    const candidates = [record, ...catalog.filter(r => r.variant_of === p.audio_id)];
-    const usable = [];
-    for (const v of candidates) {
       try {
-        const buffer = await this.load(v);
-        const length = v.loop_end_seconds - v.loop_start_seconds;
-        if (v.loop_end_seconds > buffer.duration + .02 || Math.abs(length - expected) > .05) {
-          if (v !== record) this.status(`Chorvariante ${v.id} übersprungen: Takt passt nicht (kein Time-Stretching).`);
-          continue;
+        const buffer = await this.load(record);
+        if (this.focus !== focus) return;
+        this.startFocus(focus, buffer);
+      } catch (error) {
+        if (this.focus === focus) {
+          this.stopChoir();
+          this.status(error.message);
         }
-        usable.push({ record: v, buffer });
-      } catch (_) { if (v === record) return; }
+        return;
+      }
+    } else {
+      focus.first = first;
     }
-    if (!usable.length || this.choirMode === 'off' || !this.choirMap.length || !this.enabled) return;
-    const total = Math.min(this.choirMode === 'full' ? 108 : 12, this.choirMap.length);
-    const step = Math.max(1, Math.round(this.choirMap.length / total));
-    const key = `${p.id}:${this.choirMode}:${total}:${step}:${usable.map(u => u.record.id).join('+')}`;
-    if (key === this.choirKey) return;
-    this.stopChoir(); this.choirKey = key;
+
+    if (focus.loop) await this.updateChoir(focus, phaseKey, catalog);
+  }
+
+  loopLength(record, buffer, phase) {
+    const length = record.loop_end_seconds - record.loop_start_seconds;
+    const expected = (phase.unit_ms || phase.duration_ms) / 1000;
+    if (record.loop_end_seconds > buffer.duration + .02 || Math.abs(length - expected) > .05)
+      throw new Error('Audio-Loop und Phasentakt passen nicht zusammen. Passe unit_ms und loop_start/end an; es erfolgt kein automatisches Time-Stretching.');
+    return length;
+  }
+
+  recordingStatus(record) {
+    this.status(`${record.title} · ${record.performer} · ${record.license}`);
+  }
+
+  startFocus(focus, buffer) {
+    const { first, record, once } = focus;
+    const elapsed = first.elapsed / 1000;
+    let offset, duration, length;
+    if (once) {
+      const end = Math.min(record.loop_end_seconds, buffer.duration);
+      if (record.loop_end_seconds > buffer.duration + .02 || record.loop_start_seconds >= end)
+        throw new Error('Audio-Abschnitt passt nicht zur Datei. Prüfe die Grenzen im Manifest; kein automatischer Schnitt.');
+      offset = record.loop_start_seconds + elapsed;
+      duration = Math.min(end - offset, first.phase.duration_ms / 1000 - elapsed);
+      if (duration <= 0) {
+        this.status(`${record.title} · in diesem Durchgang bereits beendet; bis zum nächsten Abschnitt bleibt der Kanal still.`);
+        return;
+      }
+    } else {
+      length = this.loopLength(record, buffer, first.phase);
+      offset = record.loop_start_seconds + elapsed % length;
+    }
+    focus.layer = this.startLayer(record, buffer, { offset, output: this.master, level: .9, attack: .15, duration });
+    if (!once) focus.loop = { record, buffer, length };
+    if (!this.choirLayers.size) this.recordingStatus(record);
+  }
+
+  startLayer(record, buffer, { offset, output, level, attack, panValue, duration }) {
     const ctx = this.context;
-    const bgGain = ctx.createGain();
-    bgGain.gain.value = 0; bgGain.gain.setTargetAtTime(this.bgLevel, ctx.currentTime, .3);
-    const lowpass = ctx.createBiquadFilter();
-    lowpass.type = 'lowpass'; lowpass.frequency.value = 1800; lowpass.Q.value = .4;
-    lowpass.connect(bgGain); bgGain.connect(this.master);
-    this.choirGraph = { bgGain, lowpass };
-    /* Zeilenfaktor gleicht aus: Gesamtpegel des Hintergrunds bleibt begrenzt. */
-    const rowSum = this.choirMap.reduce((a, s) => a + s.row, 0) || 1;
-    for (let k = 0; k < total; k++) {
-      const seat = this.choirMap[k * step];
-      if (!seat) break;
-      const u = usable[(k * 7 + 3) % usable.length];
-      const source = ctx.createBufferSource(), gain = ctx.createGain(), pan = ctx.createStereoPanner();
-      source.buffer = u.buffer; source.loop = true;
-      source.loopStart = u.record.loop_start_seconds; source.loopEnd = u.record.loop_end_seconds;
-      pan.pan.value = seat.pan;
-      const perSource = this.bgLevel * (seat.row / rowSum);
-      gain.gain.value = 0; gain.gain.setTargetAtTime(perSource, ctx.currentTime, .5);
-      source.connect(gain); gain.connect(pan); pan.connect(lowpass);
-      const length = u.record.loop_end_seconds - u.record.loop_start_seconds;
-      const stagger = (first.elapsed / 1000 + seat.off) % length;
-      source.start(0, u.record.loop_start_seconds + stagger);
-      this.choirLayers.push({ source, gain });
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    const pan = panValue == null ? null : ctx.createStereoPanner();
+    source.buffer = buffer;
+    source.loop = duration === undefined;
+    if (source.loop) {
+      source.loopStart = record.loop_start_seconds;
+      source.loopEnd = record.loop_end_seconds;
     }
-    this.status(`Raumchor: ${this.choirLayers.length} Quellen · Spaltenpanorama · Tiefpass 1,8 kHz · ${usable.length > 1 ? `${usable.length} Aufnahmevarianten, deterministisch verteilt` : 'eine Aufnahme, zeitversetzt geschichtet'}.`);
+    gain.gain.value = 0;
+    gain.gain.setTargetAtTime(level, ctx.currentTime, attack);
+    source.connect(gain);
+    if (pan) {
+      pan.pan.value = panValue;
+      gain.connect(pan);
+      pan.connect(output);
+    } else {
+      gain.connect(output);
+    }
+    const layer = { source, gain, ended: false };
+    const disconnect = () => {
+      layer.ended = true;
+      source.disconnect();
+      gain.disconnect();
+      pan?.disconnect();
+    };
+    source.onended = disconnect;
+    try {
+      if (source.loop) source.start(0, offset);
+      else source.start(0, offset, duration);
+    } catch (error) {
+      disconnect();
+      throw error;
+    }
+    return layer;
+  }
+
+  async updateChoir(focus, phaseKey, catalog) {
+    const maxSources = this.choirMode === 'full' ? 108 : 12;
+    const total = Math.min(maxSources, this.choirMap.length);
+    if (this.choirMode === 'off' || total < 2) return;
+
+    let choir = this.choir;
+    if (!choir) {
+      const { record, first } = focus;
+      choir = this.choir = { phaseKey, selected: null, variants: null };
+      const variants = [focus.loop];
+      for (const variant of catalog.filter(r => r.variant_of === record.id)) {
+        try {
+          const audio = await this.load(variant);
+          if (this.choir !== choir) return;
+          variants.push({ record: variant, buffer: audio, length: this.loopLength(variant, audio, first.phase) });
+        } catch (_) {
+          if (this.choir !== choir) return;
+        }
+      }
+      choir.variants = variants;
+    }
+    if (!choir.variants || !this.focus?.loop) return;
+
+    try {
+      this.syncChoir(choir, this.focus.first, total);
+    } catch (error) {
+      this.stopChoir();
+      this.status(error.message);
+    }
+  }
+
+  syncChoir(choir, first, total) {
+    if (choir.selected === first.monkId) return;
+    choir.selected = first.monkId;
+    const seats = Array.from({ length: total }, (_, index) => Math.floor(index * this.choirMap.length / total));
+    const wanted = seats.filter(id => id !== first.monkId).slice(0, total - 1);
+    const wantedIds = new Set(wanted);
+    const rowSum = wanted.reduce((sum, id) => sum + this.choirMap[id].row, 0);
+    const now = this.context.currentTime;
+    if (!this.choirGraph) {
+      const gain = this.context.createGain();
+      const lowpass = this.context.createBiquadFilter();
+      gain.gain.value = .056;
+      lowpass.type = 'lowpass';
+      lowpass.frequency.value = 1800;
+      lowpass.Q.value = .4;
+      lowpass.connect(gain);
+      gain.connect(this.master);
+      this.choirGraph = { gain, lowpass };
+    }
+    // Anchor new choir layers to the running background rather than to a newly selected monk.
+    choir.anchor ??= now - first.elapsed / 1000 + (first.choirOffset ?? 0);
+    for (const [id, layer] of this.choirLayers) {
+      if (!wantedIds.has(id)) {
+        this.stopLayer(layer);
+        this.choirLayers.delete(id);
+      }
+    }
+    for (const id of wanted) {
+      const seat = this.choirMap[id];
+      const level = seat.row / rowSum;
+      const layer = this.choirLayers.get(id);
+      if (layer) {
+        layer.gain.gain.setTargetAtTime(level, now, .5);
+      } else {
+        const { record, buffer, length } = choir.variants[(id * 7 + 3) % choir.variants.length];
+        const elapsed = now - choir.anchor + seat.off;
+        const offset = record.loop_start_seconds + ((elapsed % length) + length) % length;
+        this.choirLayers.set(id, this.startLayer(record, buffer, {
+          offset, output: this.choirGraph.lowpass, level, attack: .5, panValue: seat.pan,
+        }));
+      }
+    }
+    const takes = choir.variants.length > 1
+      ? `${choir.variants.length} Aufnahmevarianten, deterministisch verteilt` : 'eine Aufnahme, zeitversetzt geschichtet';
+    this.status(`Raumchor: ${this.choirLayers.size + 1} Quellen · Spaltenpanorama · Tiefpass 1,8 kHz · ${takes}.`);
   }
 }

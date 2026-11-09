@@ -19,7 +19,7 @@ Ein selbst hostbarer, offener digitaler Meditationsraum. Stilisierte Figuren dur
 ## Status
 
 - **0.2.1** — Kerzenlicht-Ritualraum (Vogelperspektive, 108 Plätze, Mittelgang), Kohorten-Ensemble als Standard (gemeinsamer Takt, Versätze 0–1200 ms), Audio-Entwurfsworkflow. Das Changelog liegt in `meditating-monks/CHANGELOG.md`.
-- Zustand lokal verifiziert (Tests, Browserprüfung); **keine öffentliche Instanz** betrieben und kein HTTPS-Deployment beansprucht.
+- Anleitungen für den lokalen Betrieb und den öffentlichen Pilotbetrieb stehen im [App-README](meditating-monks/README.md) und in der [Betriebsdokumentation](meditating-monks/docs/DEPLOYMENT.de.md).
 
 ## Bewusst nicht enthalten
 
@@ -31,10 +31,10 @@ Ein selbst hostbarer, offener digitaler Meditationsraum. Stilisierte Figuren dur
 
 ```bash
 cd meditating-monks
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-lock.txt
-cp config/node.example.json config/node.json
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+python3.13 -m venv .venv && source .venv/bin/activate
+python -m pip install -r requirements-lock.txt
+test -f config/node.json || cp config/node.example.json config/node.json
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --timeout-graceful-shutdown 5
 ```
 
 Dann `http://localhost:8000` öffnen. Der Textbetrieb funktioniert ohne Audio; kein Konto, kein Tracking.
