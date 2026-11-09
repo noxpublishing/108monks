@@ -55,12 +55,10 @@
   "tests/test_storage.py",
   "web/app.js",
   "web/audio.js",
-  "web/buddha.webp",
   "web/engine.js",
   "web/icon.svg",
   "web/index.html",
   "web/monkback.webp",
-  "web/monkfront.webp",
   "web/padmasambhava.webp",
   "web/room.js",
   "web/style.css"

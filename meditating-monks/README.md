@@ -9,13 +9,11 @@ Ein selbst hostbarer digitaler Meditationsraum: Viele stilisierte Mönche durchl
 ## Was funktioniert
 
 - Standardmäßig 108 digitale Mönche in einem gemeinsamen Takt mit stabilen Startversätzen bis 1.200 ms. Die Instanz unterstützt 1 bis 5.000 Figuren mit einem gemeinsamen Scheduler.
-- Öffentliches Praxisprofil mit 14 Phasen und 108 Mani-Wiederholungen je vollständiger Mani-Phase. Der Raum zeigt die Zyklusdauer aus dem aktiven Profil.
-- Ritualraum mit bis zu 108 Plätzen, Einzelansicht, ruhiger Darstellung und optionalen Aktivitäts-Sprechblasen. Die Listenansicht zeigt bei größeren Instanzen alle Figuren mit Aktivitätsfiltern und Seitenwechsel.
+- Öffentliches Praxisprofil mit 14 Phasen und 108 Mani-Wiederholungen je vollständiger Mani-Phase.
+- Bildschirmfüllender Ritualraum mit bis zu 108 Plätzen. Im Hochformat ordnen sich die Figuren in schmaleren Reihen an. Die Szene berücksichtigt die Systemeinstellung für reduzierte Bewegung.
 - SQLite-Persistenz, konservative Heartbeat-Zeit, keine Nachzählung von Server-Ausfallzeiten; keine fiktive Vorgeschichte bei zeitversetztem Start.
 - Live-Status per Server-Sent Events; Polling-Fallback; veraltete Anzeige friert ein und Audio stoppt.
-- Audio auf Knopfdruck aus eigenen freigegebenen Aufnahmen. Gebete lassen sich einmal pro Phasendurchgang abspielen, Mani-Rezitationen als Loop mit bis zu 108 räumlich verteilten virtuellen Quellen. Die Sparstufe verwendet bis zu 12 Quellen. Das Repository liefert keine Rezitationsaufnahmen mit.
-- Separat beschriftete lokale Browser-TTS-Demo. Aussprache nicht authentifiziert.
-- Persönliche, manuell bediente Mala im Browser, getrennt von allen Server-Zählern.
+- Freigegebene Aufnahmen lassen sich durch Antippen der Szene oder per Tastatur ein- und ausschalten. Der Raumchor nutzt bis zu 108 Quellen und im schmalen Hochformat bis zu 12. Das Repository liefert keine Rezitationsaufnahmen mit.
 - Opt-in-Föderation mit bekannten öffentlichen Schlüsseln, signierten Meldungen, Ablaufzeit und Replay-Abwehr. Kein ungeprüftes weltweites Verzeichnis.
 - Download des tatsächlich gebündelten Quellcodes über `/source`; private Konfiguration und Schlüssel sind ausgeschlossen.
 
@@ -33,7 +31,7 @@ test -f config/node.json || cp config/node.example.json config/node.json
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log --timeout-graceful-shutdown 5
 ```
 
-Dann `http://localhost:8000` öffnen. Kein API-Key nötig. Die Textdarstellung funktioniert ohne Audio. Für die Sprech-Demo im Player „Lokale TTS“ auswählen; die verfügbaren Stimmen hängen vom Betriebssystem und Browser ab.
+Dann `http://localhost:8000` öffnen. Die Szene startet still. Sobald Aufnahmen hinterlegt sind, lässt sich der Ton direkt im Raum aktivieren. Mit der Tastatur führt Tab zum Raum und Enter oder Leertaste schalten den Ton um.
 
 **Immer genau einen Worker starten.** Der Scheduler ist absichtlich ein Single Writer. Mehrere Worker auf demselben Datenordner werden blockiert, statt Zähler doppelt fortzuschreiben.
 

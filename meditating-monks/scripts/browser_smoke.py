@@ -99,7 +99,6 @@ def prepare_audio(directory):
     media = directory / "media"
     media.mkdir()
     config = json.loads((ROOT / "config/node.example.json").read_text())
-    config["ensemble"]["mode"] = "distributed"
     config_path = directory / "node.json"
     config_path.write_text(json.dumps(config))
 
@@ -107,7 +106,8 @@ def prepare_audio(directory):
     phases = {phase["id"]: phase for phase in profile["phases"]}
     once = phases["refuge"]
     loop = phases["mani"]
-    # Two long sections let us select both audio modes without waiting for the public ritual.
+    # Reach both recording modes through a real phase transition in the smoke test.
+    once["duration_ms"] = 2 * once["unit_ms"]
     profile["phases"] = [once, loop]
     (profiles / config["profile"]).write_text(json.dumps(profile))
     manifest = []
@@ -125,7 +125,7 @@ def prepare_audio(directory):
             "loop_start_seconds": 0, "loop_end_seconds": seconds,
         })
     (media / config["audio_manifest"]).write_text(json.dumps(manifest))
-    return config_path, profiles, media, (once["label"], loop["label"])
+    return config_path, profiles, media
 
 
 def open_room(page, url, errors):
@@ -133,87 +133,49 @@ def open_room(page, url, errors):
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.add_init_script(OBSERVE)
     page.goto(url, wait_until="domcontentloaded")
-    expect(page.locator("#error-banner")).to_be_hidden()
-    expect(page.locator("#connection-label")).to_have_text("Der Raum ist geöffnet")
-    seats = page.locator("#room-viewport").get_by_role("button", name="Mönch", exact=False)
-    expect(seats).to_have_count(108)
-    return seats
+    expect(page.get_by_role("img", name="Digitaler Ritualraum mit 108 meditierenden Mönchen")).to_be_visible()
+    expect(page.locator(".rr-seat")).to_have_count(108)
+    expect(page.locator("#room-notice")).to_be_hidden()
 
 
-def seat_at(seats, index):
-    return seats.and_(seats.page.locator(f'[data-i="{index}"]'))
+def check_framing(page, rows):
+    result = page.evaluate("""() => {
+        const figures = [...document.querySelectorAll('.rr-monk > image')];
+        return {
+            visible: figures.every(figure => {
+                const { x, y, right, bottom, width, height } = figure.getBoundingClientRect();
+                return width > 0 && height > 0 && x >= -1 && y >= -1 &&
+                    right <= innerWidth + 1 && bottom <= innerHeight + 1;
+            }),
+            rows: new Set(figures.map(figure => figure.getAttribute('y'))).size,
+            fits: document.documentElement.scrollWidth === innerWidth &&
+                document.documentElement.scrollHeight === innerHeight
+        };
+    }""")
+    assert result == {"visible": True, "rows": rows, "fits": True}, result
 
 
 def check_room(browser, url, output, errors, record):
-    page = browser.new_page(viewport={"width": 1440, "height": 960})
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
     try:
-        seats = open_room(page, url, errors)
-        expect(page.locator("#view-room")).to_have_attribute("aria-pressed", "true")
-        assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")
+        open_room(page, url, errors)
+        check_framing(page, rows=9)
+        expect(page.locator("header, footer, nav, dialog, select, input")).to_have_count(0)
+        expect(page.get_by_role("button")).to_have_count(0)
+        expect(page.locator(".rr-monk").first).to_have_css("animation-name", "breathe")
+        page.screenshot(path=output / "desktop.png", animations="disabled")
+        record("Desktop: all 108 monks in nine rows, with no visible controls without recordings")
+
+        source_link = page.get_by_role("link", name="Quellcode")
         page.keyboard.press("Tab")
-        expect(page.locator(".skip-link")).to_be_focused()
-        page.locator(".skip-link").blur()
-        for width in (640, 768):
-            page.set_viewport_size({"width": width, "height": 960})
-            assert not page.evaluate("document.documentElement.scrollWidth > innerWidth"), width
-        page.set_viewport_size({"width": 1440, "height": 960})
-        page.screenshot(path=output / "desktop.png", full_page=True, animations="disabled")
-        first = seat_at(seats, 0)
-        second = seat_at(seats, 1)
-        first.press("ArrowRight")
-        expect(second).to_have_attribute("aria-pressed", "true")
-        expect(second).to_be_focused()
-        first.press("Enter")
-        expect(first).to_have_attribute("aria-pressed", "true")
-        enlarge = page.locator(".rr-enlarge")
-        enlarge.press("Enter")
-        expect(enlarge).to_have_attribute("aria-pressed", "true")
-        expect(page.get_by_role("dialog", name="Vergrößerter Ritualraum")).to_be_visible()
-        assert page.locator("#audio-mode").evaluate("(node) => Boolean(node.closest('[inert]'))")
-        page.keyboard.press("Tab")
-        expect(first).to_be_focused()
-        page.keyboard.press("Shift+Tab")
-        expect(enlarge).to_be_focused()
-        page.keyboard.press("Shift+Tab")
-        expect(first).to_be_focused()
-        page.keyboard.press("Escape")
-        expect(enlarge).to_have_attribute("aria-pressed", "false")
-        expect(enlarge).to_be_focused()
-        assert not page.locator("#audio-mode").evaluate("(node) => Boolean(node.closest('[inert]'))")
-        page.locator("#room-bubbles").check()
-        expect(first.locator(".rrChip text")).not_to_be_empty()
-        record("Desktop and tablet: 108 seats, keyboard entry and selection, bubbles, enlarged-room focus and Escape, no page overflow")
-
-        page.locator("#view-list").click()
-        expect(page.locator(".monk-tile")).to_have_count(72)
-        page.locator("#page-next").click()
-        expect(page.locator(".monk-tile")).to_have_count(36)
-        page.locator("#page-prev").click()
-        expect(page.locator(".monk-tile")).to_have_count(72)
-        record("List pagination: 72 + 36")
-
-        page.locator("#mala-open").click()
-        expect(page.locator("#mala-add")).to_be_focused()
-        page.locator("#mala-add").press("Enter")
-        page.locator("#mala-add").press("Enter")
-        page.locator("#mala-undo").click()
-        expect(page.locator("#mala-count")).to_have_text("1")
-        page.keyboard.press("Escape")
-        expect(page.locator("#mala-dialog")).to_be_hidden()
-        page.reload(wait_until="domcontentloaded")
-        expect(page.locator("#connection-label")).to_have_text("Der Raum ist geöffnet")
-        page.locator("#mala-open").click()
-        expect(page.locator("#mala-count")).to_have_text("1")
-        page.keyboard.press("Escape")
-        record("Mala: keyboard add, undo, Escape, and real storage after reload")
-
-        page.locator("#audio-toggle").click()
-        expect(page.locator("#audio-status")).to_contain_text("Noch keine Aufnahme")
-        expect(page.locator("#audio-toggle")).to_have_attribute("aria-pressed", "false")
+        expect(source_link).to_be_focused()
+        with page.expect_download() as download:
+            source_link.press("Enter")
+        assert download.value.suggested_filename == "meditating-monks-source.zip"
         page.wait_for_function("() => window.smoke.heartbeat > 0")
         heartbeat = page.evaluate("window.smoke.heartbeat")
         page.wait_for_function("previous => window.smoke.heartbeat > previous", arg=heartbeat)
-        record("Missing recording is disclosed and real SSE heartbeats advance")
+        record("Keyboard-accessible source download and real SSE heartbeats")
     finally:
         page.close()
 
@@ -222,66 +184,58 @@ def check_room(browser, url, output, errors, record):
         has_touch=True, reduced_motion="reduce",
     )
     try:
-        seats = open_room(mobile, url, errors)
-        expect(mobile.locator("#room-calm")).to_be_checked()
-        assert seats.first.locator(".m").evaluate("(node) => getComputedStyle(node).animationName") == "none"
-        assert not mobile.evaluate("document.documentElement.scrollWidth > innerWidth")
-        assert mobile.locator(".rr-scroll").evaluate("(node) => node.scrollWidth > node.clientWidth")
-        mobile.screenshot(path=output / "mobile.png", full_page=True, animations="disabled")
-        record("Mobile 390px: reduced motion and internal room scroll without page overflow")
+        open_room(mobile, url, errors)
+        check_framing(mobile, rows=18)
+        expect(mobile.locator(".rr-monk").first).to_have_css("animation-name", "none")
+        mobile.screenshot(path=output / "mobile.png")
+        mobile.set_viewport_size({"width": 844, "height": 390})
+        expect(mobile.locator(".rr-svg")).to_have_attribute("viewBox", "0 0 1100 780")
+        check_framing(mobile, rows=9)
+        record("Mobile: all 108 monks in portrait and landscape, no scrolling, reduced motion honored")
     finally:
         mobile.close()
 
 
-def check_audio(browser, url, process, errors, labels, record):
-    page = browser.new_page()
+def check_audio(browser, url, process, errors, record):
+    page = browser.new_page(viewport={"width": 1440, "height": 900}, has_touch=True)
     try:
-        seats = open_room(page, url, errors)
-        listen = page.locator("#audio-toggle")
-        status = page.locator("#audio-status")
-        phase = page.locator("#selected-phase")
-        once_label, loop_label = labels
+        open_room(page, url, errors)
+        listen = page.get_by_role("button", name="Ton im Ritualraum")
+        expect(listen).to_have_attribute("aria-pressed", "false")
+        assert page.evaluate("window.smoke.starts.length") == 0
 
-        expect(phase).to_have_text(loop_label)
-        loop_seat = seats.and_(page.locator('[aria-pressed="true"]'))
-        loop_seat_id = loop_seat.get_attribute("data-i")
-        seat_at(seats, 0).press("Enter")
-        expect(phase).to_have_text(once_label)
-        listen.click()
+        page.keyboard.press("Tab")
+        expect(listen).to_be_focused()
+        page.keyboard.press("Space")
         expect(listen).to_have_attribute("aria-pressed", "true")
+        expect(page.locator("#room")).to_have_class("is-listening")
         page.wait_for_function("() => window.smoke.starts.length > 0")
         assert page.evaluate("window.smoke.starts.map(source => source.loop)") == [False]
-        once_start = page.evaluate("window.smoke.starts[0]")
-        assert abs(once_start["offset"] + once_start["duration"] - 8) < 0.01
-        page.wait_for_function("() => window.smoke.ended === 1", timeout=TIMEOUT_MS)
-        heartbeat = page.evaluate("window.smoke.heartbeat")
-        page.wait_for_function("previous => window.smoke.heartbeat > previous", arg=heartbeat)
-        assert page.evaluate("window.smoke.starts.length") == 1
-        record("Once recording: one unlooped native source ends and stays silent across a later heartbeat")
+        once = page.evaluate("window.smoke.starts[0]")
+        assert abs(once["offset"] + once["duration"] - 8) < .01
+        page.wait_for_function("() => window.smoke.ended === 1")
+        record("Keyboard activates optional audio and a once recording stops at its manifest boundary")
 
-        page.locator("#chorus-mode").select_option("off")
-        seat_at(seats, loop_seat_id).press("Enter")
-        expect(phase).to_have_text(loop_label)
-        page.wait_for_function("() => window.smoke.starts.length > 1")
-        assert page.evaluate("window.smoke.starts.map(source => source.loop)") == [False, True]
-
-        page.locator("#chorus-mode").select_option("sparse")
-        expect(status).to_contain_text("Raumchor:")
-        sparse_count = page.evaluate("window.smoke.starts.length - 1")
-        assert sparse_count == 12
-        assert page.evaluate("window.smoke.starts.slice(2).every(source => source.loop)")
-        page.locator("#chorus-mode").select_option("full")
-        page.wait_for_function("previous => window.smoke.starts.length - 1 > previous + 12", arg=sparse_count)
-        full_count = page.evaluate("window.smoke.starts.length - 1") - sparse_count + 1
-        assert full_count == 108
-        record(f"Native Web Audio: solo, sparse ({sparse_count} sources), and full ({full_count} sources)")
+        page.wait_for_function(
+            "() => window.smoke.starts.length - window.smoke.ended === 108", timeout=25_000,
+        )
+        page.set_viewport_size({"width": 390, "height": 844})
+        page.wait_for_function("() => window.smoke.starts.length - window.smoke.ended === 12")
+        check_framing(page, rows=18)
+        listen.tap()
+        expect(listen).to_have_attribute("aria-pressed", "false")
+        expect(page.locator("#room")).not_to_have_class("is-listening")
+        page.wait_for_function("() => window.smoke.starts.length === window.smoke.ended")
+        listen.tap()
+        expect(listen).to_have_attribute("aria-pressed", "true")
+        page.wait_for_function("() => window.smoke.starts.length - window.smoke.ended === 12")
+        record("Direct touch toggle and native choir with 108 desktop and 12 portrait sources")
 
         stop_server(process)
-        expect(page.locator("#connection-label")).to_contain_text("Anzeige eingefroren", timeout=12_000)
+        expect(page.locator("#room")).to_have_class("is-paused", timeout=12_000)
         expect(listen).to_have_attribute("aria-pressed", "false")
-        expect(status).to_contain_text("Audio wurde gestoppt")
         page.wait_for_function("() => window.smoke.ended === window.smoke.starts.length")
-        record("Real server disconnect freezes the display and ends every audio source")
+        record("Server loss freezes the room and ends every audio source")
     finally:
         page.close()
 
@@ -304,9 +258,9 @@ def main():
             with playwright.chromium.launch(executable_path=args.chromium) as browser:
                 with serve(directory / "text-server") as (url, _):
                     check_room(browser, url, args.output, errors, record)
-                config, profiles, media, labels = prepare_audio(directory)
+                config, profiles, media = prepare_audio(directory)
                 with serve(directory / "audio-server", config=config, profiles=profiles, media=media) as (url, process):
-                    check_audio(browser, url, process, errors, labels, record)
+                    check_audio(browser, url, process, errors, record)
                 assert not errors, errors
                 record("No uncaught JavaScript errors")
     except Exception as error:

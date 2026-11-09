@@ -52,14 +52,14 @@ function audioFixture(t, decode = async () => ({ duration: 5 })) {
   const audio = new AudioRoom(message => statuses.push(message));
   return {
     audio, context, fetch, sources, gains, statuses,
-    update: (phase, elapsed, monkId, catalog = [clip]) => audio.update([position(phase, elapsed, monkId)], catalog, 'run'),
+    update: (phase, elapsed, monkId, catalog = [clip]) => audio.update(position(phase, elapsed, monkId), catalog, 'run'),
   };
 }
 
 test('a deferred recording cannot start after its phase has passed', async t => {
   const decode = deferred();
   const { audio, sources, update } = audioFixture(t, () => decode.promise);
-  await audio.start('recording');
+  await audio.start();
   const loading = update(once);
   await update(silence);
   decode.resolve({ duration: 5 });
@@ -70,7 +70,7 @@ test('a deferred recording cannot start after its phase has passed', async t => 
 test('a once recording starts at the latest elapsed position and ends at its clip boundary', async t => {
   const decode = deferred();
   const { audio, sources, update } = audioFixture(t, () => decode.promise);
-  await audio.start('recording');
+  await audio.start();
   const loading = update(once, 250);
   await update(once, 1250);
   decode.resolve({ duration: 5 });
@@ -83,11 +83,11 @@ test('a once recording starts at the latest elapsed position and ends at its cli
 test('pending decodes are shared and old playback does not win after stop and restart', async t => {
   const decode = deferred();
   const { audio, fetch, sources, update } = audioFixture(t, () => decode.promise);
-  await audio.start('recording');
+  await audio.start();
   const previous = update(loop, 250, 1);
   const repeat = update(loop, 500, 1);
   audio.stop();
-  await audio.start('recording');
+  await audio.start();
   const next = update(loop, 750, 2);
   decode.resolve({ duration: 5 });
   await Promise.all([previous, repeat, next]);
@@ -100,7 +100,7 @@ test('a canceled context resume cannot report or re-enable the old start', async
   const resume = deferred();
   const { audio, context, statuses } = audioFixture(t);
   context.resume = () => resume.promise;
-  const starting = audio.start('recording');
+  const starting = audio.start();
   audio.stop();
   resume.resolve();
   assert.equal(await starting, false);
@@ -112,7 +112,7 @@ test('choir counts include focus and retain unaffected voices across seat change
   const { audio, sources, gains, update } = audioFixture(t);
   audio.setChoirMap(Array.from({ length: 108 }, (_, id) => ({ off: id / 1000, row: 1, pan: 0 })));
   audio.setChoirMode('full');
-  await audio.start('recording');
+  await audio.start();
   await update(loop);
   assert.equal(sources.length, 108);
   const live = () => sources.filter(source => !source.stopped);
@@ -145,7 +145,7 @@ test('a choir variant resolving after the mode was turned off cannot start or ch
   });
   audio.setChoirMap([{ off: 0, row: 1, pan: 0 }, { off: .1, row: 1, pan: 0 }]);
   audio.setChoirMode('full');
-  await audio.start('recording');
+  await audio.start();
   const loading = update(loop, 0, 0, [clip, variant]);
   await variantStarted.promise;
   audio.setChoirMode('off');

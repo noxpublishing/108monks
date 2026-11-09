@@ -1,4 +1,4 @@
-/** On-demand recordings and local speech demo. */
+/** On-demand room recordings. */
 export class AudioRoom {
   constructor(status) {
     this.status = status;
@@ -6,52 +6,31 @@ export class AudioRoom {
     this.bufferCache = new Map();
     this.enabled = false;
     this.ready = false;
-    this.mode = 'recording';
-    this.volume = 0.45;
-    this.voice = null;
     this.generation = 0;
-    this.lastSpokenKey = '';
     this.focus = null;
     this.choir = null;
     this.choirMode = 'off';
     this.choirMap = [];
     this.choirLayers = new Map();
     this.choirGraph = null;
-    this.bgLevel = 0.056;
   }
 
-  localVoices() {
-    return ('speechSynthesis' in window) ? speechSynthesis.getVoices().filter(v => v.localService) : [];
-  }
-
-  setVolume(value) {
-    this.volume = value;
-    if (this.master) this.master.gain.setTargetAtTime(value, this.context.currentTime, 0.05);
-  }
-
-  async start(mode, voice) {
+  async start() {
     this.stop();
     const generation = this.generation;
     this.enabled = true;
-    this.mode = mode;
-    this.voice = voice;
     try {
-      if (mode === 'tts') {
-        if (!('speechSynthesis' in window) || !voice?.localService)
-          throw new Error('Keine vom Browser als lokal markierte TTS-Stimme verfügbar. Hinterlege eine freigegebene Aufnahme.');
-      } else {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) throw new Error('Web Audio wird in diesem Browser nicht unterstützt.');
-        if (!this.context) {
-          this.context = new AudioContext();
-          this.master = this.context.createGain();
-          const limiter = this.context.createDynamicsCompressor();
-          this.master.connect(limiter);
-          limiter.connect(this.context.destination);
-        }
-        this.master.gain.value = this.volume;
-        await this.context.resume();
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) throw new Error('Web Audio wird in diesem Browser nicht unterstützt.');
+      if (!this.context) {
+        this.context = new AudioContext();
+        this.master = this.context.createGain();
+        this.master.gain.value = .45;
+        const limiter = this.context.createDynamicsCompressor();
+        this.master.connect(limiter);
+        limiter.connect(this.context.destination);
       }
+      await this.context.resume();
     } catch (error) {
       if (generation !== this.generation) return false;
       this.stop();
@@ -59,9 +38,7 @@ export class AudioRoom {
     }
     if (generation !== this.generation) return false;
     this.ready = true;
-    this.status(mode === 'tts'
-      ? 'Lokale Sprech-Demo. Keine authentifizierte tibetische Aussprache; nicht exakt mit dem Serverrhythmus synchron.'
-      : 'Aufnahme wird beim passenden Abschnitt zugeschaltet.');
+    this.status('Der Ton setzt ein, sobald eine Aufnahme zum Abschnitt verfügbar ist.');
     return true;
   }
 
@@ -84,11 +61,6 @@ export class AudioRoom {
     this.choirLayers.clear();
   }
 
-  setBgLevel(value) {
-    this.bgLevel = value;
-    this.choirGraph?.gain.gain.setTargetAtTime(value, this.context.currentTime, .08);
-  }
-
   setChoirMode(mode) {
     if (this.choirMode === mode) return;
     this.choirMode = mode;
@@ -107,8 +79,6 @@ export class AudioRoom {
     this.generation++;
     this.stopFocus();
     this.stopChoir();
-    this.lastSpokenKey = '';
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
   }
 
   load(record) {
@@ -130,40 +100,8 @@ export class AudioRoom {
     return this.context.decodeAudioData(bytes);
   }
 
-  speak(first, runKey) {
-    const p = first.phase;
-    if (p.kind === 'rest') {
-      if (this.lastSpokenKey) speechSynthesis.cancel();
-      this.lastSpokenKey = '';
-      return;
-    }
-    const unit = p.unit_ms ? Math.floor(first.elapsed / p.unit_ms) : 0;
-    const key = `${runKey}:${first.monkId}:${p.id}:${first.cycle}:${unit}`;
-    if (key === this.lastSpokenKey) return;
-    this.lastSpokenKey = key;
-    const generation = this.generation;
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(p.speech_text || p.text);
-    utterance.voice = this.voice;
-    utterance.lang = this.voice.lang;
-    utterance.rate = .75;
-    utterance.volume = this.volume;
-    utterance.onerror = event => {
-      if (generation === this.generation && key === this.lastSpokenKey && !['canceled', 'interrupted'].includes(event.error))
-        this.status(`TTS nicht verfügbar: ${event.error}`);
-    };
-    speechSynthesis.speak(utterance);
-  }
-
-  async update(positions, catalog, runKey) {
-    const first = positions[0];
-    if (!this.ready || !first) return;
-    if (this.mode === 'tts') {
-      try { this.speak(first, runKey); }
-      catch (error) { this.status(error.message); }
-      return;
-    }
-
+  async update(first, catalog, runKey) {
+    if (!this.ready) return;
     const p = first.phase;
     const once = p.audio_mode === 'once';
     const record = catalog.find(r => r.id === p.audio_id);
@@ -313,7 +251,7 @@ export class AudioRoom {
     if (!this.choirGraph) {
       const gain = this.context.createGain();
       const lowpass = this.context.createBiquadFilter();
-      gain.gain.value = this.bgLevel;
+      gain.gain.value = .056;
       lowpass.type = 'lowpass';
       lowpass.frequency.value = 1800;
       lowpass.Q.value = .4;

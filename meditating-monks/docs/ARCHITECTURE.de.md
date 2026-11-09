@@ -8,7 +8,7 @@
 
 `app/main.py` betreibt FastAPI und einen Heartbeat pro Sekunde. Die Anwendung startet absichtlich mit genau einem Worker. `app/storage.py` speichert in SQLite/WAL. Eine Dateisperre verhindert zwei Scheduler im selben Datenordner.
 
-`web/app.js`, `engine.js`, `audio.js` und `style.css` bilden eine native Browseroberfläche ohne Buildsystem und ohne externe Fonts, CDNs oder UI-Bibliotheken. SVG-Figuren sind eigene stilisierte Vektoren. Die Darstellung paginiert auf 72 Figuren, auch wenn serverseitig mehr laufen.
+`web/app.js`, `engine.js`, `room.js`, `audio.js` und `style.css` bilden eine native Browseroberfläche ohne Buildsystem. Der SVG-Raum zeigt bis zu 108 Figuren und verwendet im schmalen Hochformat eine schmalere Sitzordnung.
 
 `app/federation.py` signiert und verifiziert Nachrichten und sendet nur an explizit lokal konfigurierte Gegenstellen. `app/source.py` erstellt das öffentliche Quellcodeangebot aus `SOURCE_MANIFEST.json`.
 
@@ -25,8 +25,6 @@ Die Browserdarstellung interpoliert höchstens zwei Sekunden zwischen Serverstä
 ## Zähler und Speicherung
 
 Getrennte Größen: digitale Mantra-Ereignisse, digitale Verbeugungsbewegungen, digitale Darstellungszyklen von Gaben und vollständig durchlaufene Zyklusdauer. Keine spirituellen Attribute oder Verdiensteinheiten.
-
-Die persönliche Mala nutzt nur `localStorage` und manuelle Eingaben. Sie wird nicht übertragen. Ohne erlaubten Browserspeicher bleibt sie nur im aktuellen Dokument erhalten.
 
 Ein Konfigurationsdigest umfasst Profil und Figurenzahl. Ändern sie sich, verweigert der bestehende Lauf die automatische Fortsetzung. Der Betreiber archiviert ihn lokal und startet bewusst einen neuen. Alte Läufe bleiben in SQLite erhalten. In v0.1 gibt es noch keine Archiv-Browseroberfläche.
 
@@ -49,9 +47,7 @@ Es gibt kein anonymes Administrations-, Datei-Upload- oder Fremd-URL-Fetch-API. 
 
 ## Audio
 
-Der Server liefert Text und berechtigt verfügbare Dateien. Der Browser erstellt Web-Audio-Loops erst nach einem Klick. Die Loop-Dauer muss zum Profilintervall passen. Ein Kompressor und normalisierte Layer-Gains begrenzen den Mix; sie ersetzen keine professionelle Abmischung.
-
-TTS ist eine zweite, ausdrücklich ungenaue Sprech-Demo. Ihre Wiedergabe wird nicht zur Quelle der Serverzähler. Keine exakte akustische Synchronität zwischen verschiedenen Computern wird behauptet. Latenz, Audio-Ladevorgang, Geräte und Timer unterscheiden sich.
+Der Server liefert Profiltexte und berechtigt verfügbare Dateien. Tippen oder Tastaturaktivierung der Szene schalten den Ton um. Erst dann lädt und dekodiert der Browser eine Aufnahme. Die Loop-Dauer muss zum Profilintervall passen. Ein Kompressor und normalisierte Pegel begrenzen den Mix. Latenz, Audio-Ladevorgang, Geräte und Timer unterscheiden sich zwischen Computern.
 
 ## Grenzen
 
@@ -64,7 +60,5 @@ FastAPI Lifespan: https://fastapi.tiangolo.com/advanced/events/
 Web Audio Loops: https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode/loop
 
 Browser-Autoplay: https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay
-
-Browser-Stimmen: https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis/getVoices
 
 Ed25519: https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/

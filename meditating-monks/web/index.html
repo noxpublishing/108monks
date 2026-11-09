@@ -1,79 +1,22 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f5f2eb">
-  <meta name="description" content="Ein selbst hostbarer digitaler Raum für Mantra-Rezitation und Mitgefühl. Open Source, ohne Konten oder Tracking.">
-  <title>Meditating Monks · Ein Raum für Mitgefühl</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17100b">
+  <title>Meditating Monks</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
-<a class="skip-link" href="#monastery">Zum Meditationsraum</a>
-<svg class="symbol-bank" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-<defs>
- <symbol id="monk-shape" viewBox="0 0 100 100">
-  <ellipse cx="50" cy="86" rx="35" ry="5" fill="currentColor" opacity=".08"/>
-  <g class="seated">
-   <path d="M49 66 C33 62 13 76 18 84 C26 91 47 87 52 82 C60 89 81 91 84 82 C85 75 66 62 49 66Z" fill="#6e3339"/>
-   <path d="M36 46 Q50 37 64 46 L73 76 Q50 85 27 76Z" fill="#90424a"/>
-   <path d="M36 46 L56 69 L60 45 Q48 39 36 46Z" fill="#c58e59"/>
-   <path d="M39 48 L49 74 L29 76Z" fill="#71363e"/>
-   <path d="M63 48 Q76 63 61 68 L52 66" fill="none" stroke="#b77b54" stroke-width="5" stroke-linecap="round"/>
-   <path d="M36 49 Q25 62 39 68 L48 66" fill="none" stroke="#c58e63" stroke-width="5" stroke-linecap="round"/>
-   <path d="M42 68 Q50 73 58 68" fill="none" stroke="#dfad7e" stroke-width="4" stroke-linecap="round"/>
-   <g class="head"><path d="M45 39 L45 45 Q50 49 55 44 L55 39" fill="#bb835c"/><ellipse cx="50" cy="29" rx="12" ry="15" fill="#d7a477"/><path d="M43 31 Q46 33 48 31 M52 31 Q55 33 58 31" fill="none" stroke="#6e4e40" stroke-width="1.3" stroke-linecap="round"/><path d="M48 38 Q50 39 53 37" fill="none" stroke="#976d55" stroke-width="1.1"/></g>
-  </g>
-  <g class="bowing">
-   <path d="M43 60 L43 83 L58 83 L57 60" fill="#6e3339"/>
-   <g class="bow-torso"><path d="M38 39 Q49 33 61 40 L60 68 L38 68Z" fill="#90424a"/><path d="M39 40 L53 64 L57 39" fill="#c58e59"/><circle cx="50" cy="26" r="11" fill="#d7a477"/><path d="M39 44 L49 34 L53 44 L61 44" fill="none" stroke="#d7a477" stroke-width="4" stroke-linecap="round"/></g>
-  </g>
-  <g class="offering-mark"><path d="M42 72 Q50 85 58 72Z" fill="#c99d58"/><path d="M49 69 Q43 61 51 57 Q57 64 49 69" fill="#e4bb6d"/></g>
- </symbol>
-</defs>
-</svg>
-<header class="site-header">
- <a class="brand" href="/"><img src="/assets/icon.svg" width="38" height="38" alt=""><span>Meditating <b>Monks</b><small>A CONTINUOUS OFFERING</small></span></a>
- <nav aria-label="Hauptnavigation"><a href="#monastery">Der Raum</a><a href="#practice">Der Ablauf</a><a href="#network">Das Netzwerk</a></nav>
- <a class="open-source" href="/source">OPEN SOURCE <span aria-hidden="true">↗</span></a>
-</header>
-<main>
- <section class="hero" aria-labelledby="hero-heading">
-  <div><p class="eyebrow"><span class="status-dot" id="status-dot"></span><span id="connection-label">Verbindung wird aufgebaut</span></p><h1 id="hero-heading">Ein Raum für<br><em>Mitgefühl.</em></h1><p class="hero-copy">Viele digitale Mönche. Eine gemeinsame Widmung.<br>Ein stiller Ort im Netz, der an das Wohl aller Wesen erinnert.</p></div>
-  <aside class="dedication-card"><span class="small-label">UNSERE AUSRICHTUNG</span><p id="dedication-text">Möge dieser Raum dem Wohl und der Befreiung aller fühlenden Wesen dienen.</p><span class="fine-rule"></span><small>Eine menschliche Intention.<br>Eine digitale Darstellung.</small></aside>
- </section>
- <div class="error-banner" id="error-banner" role="alert" hidden></div>
- <section class="monastery-layout" id="monastery" tabindex="-1" aria-label="Digitaler Meditationsraum">
-  <div class="room-card">
-   <div class="section-top"><div><p class="eyebrow">DEIN DIGITALER MEDITATIONSRAUM</p><h2 id="node-name">The Quiet Monastery</h2></div><span class="pill" id="monk-count">— Mönche</span></div>
-   <div class="filters" role="group" aria-label="Mönche nach Aktivität filtern"><button data-filter="all" aria-pressed="true">Alle</button><button data-filter="mantra" aria-pressed="false">Rezitation</button><button data-filter="prostration" aria-pressed="false">Niederwerfungen</button><button data-filter="offering" aria-pressed="false">Darbringungen</button><button data-filter="rest" aria-pressed="false">Stille</button></div>
-   <div class="room-toolbar" role="group" aria-label="Raumdarstellung">
-    <div class="seg-group" role="group" aria-label="Ansicht"><button id="view-room" aria-pressed="true">Raum</button><button id="view-list" aria-pressed="false">Liste</button></div>
-    <label class="room-chk"><input type="checkbox" id="room-bubbles"> Sprechblasen</label>
-    <label class="room-chk"><input type="checkbox" id="room-calm"> Ruhige Darstellung</label>
-    <span id="room-note" class="room-note"></span>
-   </div>
-   <div class="room-viewport" id="room-viewport"></div>
-   <div class="monks-grid" id="monks-grid" hidden aria-label="Digitale Mönche auswählen"></div>
-   <p class="empty-state" id="empty-filter" hidden>In dieser Phase befindet sich gerade kein digitaler Mönch.</p>
-   <div class="room-footer" id="list-footer" hidden><span id="page-label">Verbindung wird aufgebaut …</span><div><button class="text-button" id="page-prev" aria-label="Vorherige Seite">←</button><button class="text-button" id="page-next" aria-label="Nächste Seite">→</button></div></div>
-   <div class="stats"><div><b id="stat-chant">0</b><span>digitale Mantra-Zyklen</span></div><div><b id="stat-bow">0</b><span>digitale Niederwerfungen</span></div><div><b id="stat-uptime">0m</b><span>gezählte Laufzeit</span></div></div>
-   <p class="counter-note">Software-Ereignisse, keine menschliche Praxis und kein Maß für spirituelles Verdienst.</p>
-  </div>
-  <aside class="view-card" aria-label="Einzelansicht eines digitalen Mönchs">
-   <div class="view-title"><span class="small-label">EINZELANSICHT</span><span id="selected-number">MONK —</span></div>
-   <div class="portrait shrine-portrait" id="portrait"><div class="shrine" id="shrine" role="img" aria-label="Einzelansicht: Buddha über Padmasambhava, dahinter die Versammlung, im Vordergrund der ausgewählte digitale Mönch."><img class="dw-buddha" src="/assets/buddha.webp" alt="Buddha, stilisierte Projekt-Illustration"><img class="dw-guru" src="/assets/padmasambhava.webp" alt="Padmasambhava, stilisierte Projekt-Illustration"><div class="dw-crowd" id="dw-crowd" aria-hidden="true"></div><img class="dw-self" id="dw-self" src="/assets/monkfront.webp" alt="Ausgewählter digitaler Mönch, Frontansicht"></div><div class="portrait-caption" id="portrait-caption">Digitale Darstellung · Buddha · Padmasambhava · Versammlung</div></div>
-   <div class="view-content"><span class="phase-kicker" id="phase-kicker">DER MOMENT</span><h3 id="selected-phase">Ankommen</h3><p class="tibetan" id="selected-tibetan" lang="bo" hidden></p><p class="phase-text" id="selected-text">Der Raum lädt …</p><div class="phase-progress"><span id="phase-progress-bar"></span></div><div class="progress-label"><span id="phase-progress-label">—</span><span id="phase-remaining">—</span></div></div>
-   <div class="audio-box"><label for="audio-mode">Dem Raum zuhören</label><select id="audio-mode"><option value="recording">Freigegebene Aufnahme</option><option value="tts">Lokale TTS · Aussprache-Demo</option></select><div id="tts-controls" hidden><label for="tts-voice">Vom Browser als lokal markierte Stimme</label><select id="tts-voice"></select></div><div class="audio-row"><button class="primary-button" id="audio-toggle" aria-pressed="false">▶ Zuhören</button><label class="chorus-label">Raumchor <select id="chorus-mode" aria-label="Raumchor-Modus"><option value="off">aus</option><option value="sparse">sparsam · 12 Quellen</option><option value="full" selected>voll · 108 Quellen</option></select></label></div><label class="volume-label">Lautstärke <input id="volume" type="range" min="0" max="1" step="0.01" value="0.45"></label><label class="volume-label">Hintergrund im Raum <input id="volume-bg" type="range" min="0" max="1" step="0.05" value="0.35" disabled></label><p id="audio-status" role="status">Keine Aufnahme hinterlegt. TTS ist eine technische Sprech-Demo, kein tibetischer Gesang.</p></div>
-  </aside>
- </section>
- <section class="lower-layout">
-  <div class="practice-card" id="practice"><div class="section-top"><div><p class="eyebrow">EIN WIEDERKEHRENDER ZYKLUS</p><h2>Mehr als ein Mantra-Loop.</h2></div><span class="pill" id="cycle-length">—</span></div><p class="section-description">Von der Ausrichtung über Verbeugungen und Darbringungen zur Rezitation und Widmung. Jeder Mönch folgt demselben Ablauf, zeitversetzt.</p><ol id="phase-list" class="phase-list"></ol><details class="source-details"><summary>Tradition, Einordnung & Quellen</summary><p id="classification"></p><p>Die deutschen Texte sind eigene redaktionelle Formulierungen. Dieser Ablauf ist keine überlieferte Liturgie und kein vollständiges Ngöndro. Die Zeitvorgaben sind technische Designentscheidungen.</p><div id="sources"></div></details></div>
-  <div class="support-column"><section class="join-card"><p class="eyebrow">NICHT NUR ZUSCHAUEN</p><h2>Ein Moment.<br>Deine eigene Praxis.</h2><p>Rezitiere selbst und zähle mit einer persönlichen Mala. Deine Eingaben bleiben in diesem Browser und werden nicht mit den digitalen Zählern vermischt.</p><button class="secondary-button" id="mala-open">Meine Mala öffnen <span>↗</span></button></section><section class="network-card" id="network"><p class="eyebrow">UNABHÄNGIG. VERBINDUNG MÖGLICH.</p><h2>Ein Raum unter vielen.</h2><p id="network-summary">Eigenständige Instanz. Das freiwillige Netzwerk ist noch nicht aktiviert.</p><div id="peer-list"></div><details><summary>Öffentliche Knotenidentität</summary><code id="node-id"></code><p>Signaturen bestätigen die Herkunft einer Meldung, nicht die Wahrheit ihrer Zähler oder eine spirituelle Wirkung.</p></details></section></div>
- </section>
- <footer><div class="footer-brand">Meditating Monks <span>v<span id="version">0.1.0</span></span></div><p>Kein Konto. Keine Rangliste. <a href="/source">Quellcode dieser Instanz</a></p><p class="fine-print">Digitale Darstellungen sind keine ordinierten oder als bewusst vorausgesetzten Wesen. Der Raum ersetzt weder persönliche Praxis noch Unterweisung.</p></footer>
-</main>
-<dialog id="mala-dialog" aria-labelledby="mala-title"><button class="dialog-close" id="mala-close" aria-label="Mala schließen">×</button><p class="eyebrow">DEINE PERSÖNLICHE MALA</p><h2 id="mala-title">Eine Rezitation nach der anderen.</h2><p>Nur von dir bestätigte Wiederholungen. Keine automatische Zählung.</p><div class="mala-beads" id="mala-beads" aria-hidden="true"></div><div class="mala-value"><b id="mala-count">0</b><span>selbst eingetragen · <span id="mala-rounds">0</span> vollständige 108er-Runden</span></div><button class="primary-button" id="mala-add">+ Eine Rezitation</button><div class="mala-actions"><button class="text-button" id="mala-undo">Letzte Eingabe zurücknehmen</button><button class="text-button" id="mala-reset">Zurücksetzen</button></div><p class="fine-print" id="mala-storage">Nur lokal in diesem Browser gespeichert. Kein Nachweis einer formellen Ansammlung.</p></dialog>
-<noscript><p class="error-banner">Für die Live-Darstellung ist JavaScript erforderlich. Der Serverablauf läuft unabhängig davon weiter.</p></noscript>
-</body></html>
+  <main aria-label="Meditating Monks">
+    <div id="room"></div>
+    <button id="listen" type="button" aria-label="Ton im Ritualraum" aria-pressed="false" hidden></button>
+    <p id="room-notice" class="room-notice" role="status" hidden>Der Raum öffnet sich.</p>
+    <p id="audio-status" class="visually-hidden" role="status"></p>
+    <noscript><p class="room-notice no-script">Der Ritualraum benötigt JavaScript.</p></noscript>
+    <a class="source-link" href="/source">Quellcode</a>
+  </main>
+</body>
+</html>
