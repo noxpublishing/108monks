@@ -1,0 +1,19 @@
+{
+  "mode": "offline UI component checks with API/storage/TTS fixtures; real Chromium DOM and Web Audio",
+  "checks": [
+    "Desktop 1440px: initial render, 72 virtualized tiles, selected mantra, no overflow",
+    "Prostration filter and single-monk view",
+    "Offering filter and single-monk view",
+    "Pagination 72 + 36",
+    "Manual mala +3 / undo / storage API mock / Escape dialog",
+    "Missing recording is disclosed, not faked",
+    "TTS control flow with mocked local voice (not real pronunciation test)",
+    "Stale heartbeat freezes display and stops audio",
+    "Mobile 390px: no horizontal overflow",
+    "Reduced-motion disables the prostration animation",
+    "Real Web Audio decode + 3 loop sources, using a silent test WAV",
+    "No uncaught JavaScript errors"
+  ],
+  "count": 12,
+  "errors": []
+}

@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+config/node.json
+config/peers.json
+media/*
+!media/README.md
+!media/manifest.example.json
+!media/.gitkeep
+test-results/
+*.sqlite3*
+*.ed25519
+source.zip
