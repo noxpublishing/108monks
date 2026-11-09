@@ -1,4 +1,4 @@
-import { timeline, monkPosition, monkOffset, displayKind, duration } from './engine.js';
+import { timeline, monkPosition, monkOffset, cohortOffset, displayKind, duration } from './engine.js';
 import { AudioRoom } from './audio.js';
 import { Room } from './room.js';
 
@@ -117,15 +117,7 @@ function renderSelected() {
   $('phase-progress-bar').style.width = `${pos.elapsed / p.duration_ms * 100}%`;
   $('phase-progress-label').textContent = p.unit_ms ? `Einheit ${Math.floor(pos.elapsed / p.unit_ms) + 1} / ${p.duration_ms / p.unit_ms}` : 'Im aktuellen Abschnitt';
   $('phase-remaining').textContent = `${duration(p.duration_ms - pos.elapsed)} verbleibend`;
-  if (audio.enabled && !stale()) {
-    const positions = [pos];
-    if (audio.chorus && p.audio_id) {
-      for (let i = 0; i < state.monks && positions.length < 3; i++) {
-        if (i !== selected) { const other = position(i); if (other.phase.audio_id === p.audio_id) positions.push(other); }
-      }
-    }
-    audio.update(positions, bootstrap.audio, state.run_id);
-  }
+  if (audio.enabled && !stale()) audio.update([pos], bootstrap.audio, state.run_id);
 }
 function render(force = false) {
   if (!state || !tl) return;
@@ -168,6 +160,7 @@ function updateVoices() {
 }
 function stopAudio(message = 'Audio ist ausgeschaltet.') {
   audio.stop(); $('audio-toggle').textContent = '▶ Zuhören'; $('audio-toggle').setAttribute('aria-pressed', 'false'); $('audio-status').textContent = message;
+  $('volume-bg').disabled = true;
 }
 $('audio-toggle').addEventListener('click', async () => {
   if (audio.enabled) { stopAudio(); return; }
@@ -175,13 +168,17 @@ $('audio-toggle').addEventListener('click', async () => {
   const mode = $('audio-mode').value;
   if (mode === 'recording' && !bootstrap.audio.length) { $('audio-status').textContent = 'Noch keine Aufnahme hinterlegt. Wähle für einen Funktionstest die lokale TTS-Demo.'; return; }
   try {
-    await audio.start(mode, audio.localVoices()[Number($('tts-voice').value)], $('chorus').checked);
-    $('audio-toggle').textContent = '■ Audio stoppen'; $('audio-toggle').setAttribute('aria-pressed', 'true'); renderSelected();
+    await audio.start(mode, audio.localVoices()[Number($('tts-voice').value)]);
+    $('audio-toggle').textContent = '■ Audio stoppen'; $('audio-toggle').setAttribute('aria-pressed', 'true');
+    $('volume-bg').disabled = mode === 'tts';
+    renderSelected();
   } catch (error) { stopAudio(error.message); }
 });
-$('audio-mode').addEventListener('change', () => { stopAudio(); $('tts-controls').hidden = $('audio-mode').value !== 'tts'; $('chorus').disabled = $('audio-mode').value === 'tts'; updateVoices(); });
+$('audio-mode').addEventListener('change', () => { stopAudio(); $('tts-controls').hidden = $('audio-mode').value !== 'tts'; $('chorus-mode').disabled = $('audio-mode').value === 'tts'; updateVoices(); });
 $('tts-voice').addEventListener('change', () => stopAudio('Stimme geändert. Starte die Wiedergabe erneut.'));
-$('chorus').addEventListener('change', () => { audio.chorus = $('chorus').checked; audio.stopLayers(); renderSelected(); });
+$('chorus-mode').addEventListener('change', () => { audio.setChoirMode($('chorus-mode').value); renderSelected(); });
+$('volume-bg').addEventListener('input', event => audio.setBgLevel(Number(event.target.value) * 0.16));
+audio.setBgLevel(Number($('volume-bg').value) * 0.16);
 $('volume').addEventListener('input', event => audio.setVolume(Number(event.target.value)));
 if ('speechSynthesis' in window) speechSynthesis.addEventListener('voiceschanged', updateVoices);
 updateVoices();
@@ -276,6 +273,20 @@ async function init() {
     room = new Room($('room-viewport'), { onSelect: index => { selected = index; selectedPhaseKey = ''; render(true); } });
     room.build(state.monks);
     buildShrineCrowd();
+    /* Raumchor-Karte: bis zu 108 feste Wiedergabepositionen mit Cohort-Versatz,
+       Spaltenpanorama und Zeilen-Distanzfaktor (hinten leiser, Ritualraum-Konzept §4). */
+    const choirSeats = Math.min(state.monks, 108);
+    const choirMap = [];
+    for (let i = 0; i < choirSeats; i++) {
+      const col = i % 12, row = Math.floor(i / 12);
+      choirMap.push({
+        off: cohortOffset(i, ensemble) / 1000,
+        pan: (col / 11) * 1.5 - 0.75,
+        row: 1 - row * 0.056,
+      });
+    }
+    audio.setChoirMap(choirMap);
+    audio.setChoirMode($('chorus-mode').value);
     room.setBubbles(roomPrefs.bubbles); room.setCalm(roomPrefs.calm);
     $('room-bubbles').checked = roomPrefs.bubbles; $('room-calm').checked = roomPrefs.calm;
     $('room-note').textContent = state.monks > 108
