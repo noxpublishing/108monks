@@ -54,14 +54,14 @@
   "tests/test_federation.py",
   "tests/test_storage.py",
   "web/app.js",
-  "web/assets/buddha.webp",
-  "web/assets/monkback.webp",
-  "web/assets/monkfront.webp",
-  "web/assets/padmasambhava.webp",
   "web/audio.js",
+  "web/buddha.webp",
   "web/engine.js",
   "web/icon.svg",
   "web/index.html",
+  "web/monkback.webp",
+  "web/monkfront.webp",
+  "web/padmasambhava.webp",
   "web/room.js",
   "web/style.css"
 ]

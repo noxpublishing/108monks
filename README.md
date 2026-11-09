@@ -14,7 +14,7 @@ Ein selbst hostbarer, offener digitaler Meditationsraum. Stilisierte Figuren dur
 | `demo/ritualraum.html` | Standalone-Referenzdemo des Ritualraums (eine Datei, ohne Server lauffähig). |
 | `docs/` | Produktkonzept v0.2.0, Ritualraum-Spezifikation, Prüfbericht, englisches Aufnahmeskript. |
 | `docs/preview/` | Screenshots des aktuellen Demostands. |
-| `artwork/` | Illustrationsquellen (PNG/SVG): Mönch vorn/hinten, Padmasambhava, Buddha. Die eingebetteten Assets liegen in `meditating-monks/web/assets/`. |
+| `artwork/` | Illustrationsquellen (PNG/SVG): Mönch vorn/hinten, Padmasambhava, Buddha. Die eingebetteten Assets liegen in `meditating-monks/web/`. |
 
 ## Status
 

@@ -9,7 +9,7 @@ Ritualraum und gemeinsamer Takt, aufbauend auf 0.1.0:
 - Aktivitäts-Sprechblasen über den Figuren: Zeiger, seed-stabile Streuung und wellenförmiger Textwechsel im Übergangskorridor; standardmäßig aus.
 - Ruhige Darstellung, Raum vergrößern mit Escape und Pfeiltasten-Auswahl im Sitzraster.
 - Audio-Workflow: `audio-probe` und `audio-prepare` erzeugen unveröffentlichte Entwürfe; eine geprüfte Mani-Rezitation wird von Hand in `media/manifest.json` verbunden. Kein Time-Stretching, keine Tonhöhenänderung.
-- Figuren-Illustrationen (Mönch vorn/hinten, Padmasambhava, Buddha) als Projekt-Assets in `web/assets/`.
+- Figuren-Illustrationen (Mönch vorn/hinten, Padmasambhava, Buddha) als Projekt-Assets in `web/`, integriert in Ritualraum und Einzelansicht.
 - Lokale Mani-Rezitation im Testbetrieb: Loop 3,332 s, `unit_ms` entsprechend angepasst; Rechte- und Ausspracheprüfung bleibt offen.
 - `new-run` archiviert bei Profil- oder Timingänderungen den alten Lauf; der Lauf-Digest umfasst jetzt auch das Ensemble.
 

@@ -29,12 +29,6 @@ function colX(r, c) {
   return 550 + side * (d + AISLE / 2);
 }
 function scaleOf(r) { return 1 - 0.028 * r; }
-function robeFill(r, id) {
-  const L = 30 + (8 - r) * 0.75 + (hash01(id + 20) - 0.5) * 2;
-  const C = 0.055 + (hash01(id + 40) - 0.5) * 0.012;
-  const H = 26 + (hash01(id + 80) - 0.5) * 6;
-  return `oklch(${L.toFixed(1)}% ${C.toFixed(3)} ${H.toFixed(1)})`;
-}
 
 /* ---------- Gesten je Abschnittsart ---------- */
 const POSTURE = {
@@ -138,9 +132,7 @@ const SCENE = `
 <path d="M360 202 q 40 10 80 0 t 80 0 t 80 0 t 80 0 t 60 0" fill="none" stroke="oklch(30% 0.06 32)" stroke-width="2"/>
 <ellipse cx="548" cy="112" rx="118" ry="86" fill="url(#rrHalo)" opacity="0.5"/>
 <rect x="488" y="22" width="120" height="108" rx="4" fill="oklch(22% 0.03 55)" stroke="oklch(46% 0.06 62)" stroke-width="2"/>
-<rect x="496" y="30" width="104" height="92" rx="2" fill="oklch(18% 0.025 55)" stroke="oklch(40% 0.06 60)" stroke-width="0.8" stroke-dasharray="5 5"/>
-<text x="548" y="70" text-anchor="middle" fill="oklch(72% 0.06 80)" font-size="11" font-style="italic">Padmasambhava</text>
-<text x="548" y="86" text-anchor="middle" fill="oklch(58% 0.04 72)" font-size="9" letter-spacing="2">PLATZHALTER</text>
+<image href="/assets/padmasambhava.webp" x="506" y="30" width="84" height="92" preserveAspectRatio="xMidYMid meet"/>
 <g fill="oklch(42% 0.055 62)">
   <ellipse cx="420" cy="168" rx="6" ry="2.6"/><ellipse cx="460" cy="168" rx="6" ry="2.6"/>
   <ellipse cx="640" cy="168" rx="6" ry="2.6"/><ellipse cx="680" cy="168" rx="6" ry="2.6"/>
@@ -232,29 +224,16 @@ export class Room {
     m.style.setProperty('--del', (hash01(index + 140) * 3).toFixed(2) + 's');
     m.style.setProperty('--amp', (1.15 + 0.5 * hash01(index + 180)).toFixed(2));
     m.style.setProperty('--enter', (hash01(index + 500) * 420).toFixed(0) + 'ms');
-    const robe = document.createElementNS(NS, 'path');
-    const rx = 13.5 * s, ry = 17.5 * s, by = cy - 4 * s;
-    robe.setAttribute('d', `M ${cx} ${by - ry} C ${cx + rx} ${by - ry} ${cx + rx} ${by + ry} ${cx} ${by + ry} C ${cx - rx} ${by + ry} ${cx - rx} ${by - ry} ${cx} ${by - ry} Z`);
-    robe.setAttribute('fill', robeFill(r, index));
-    robe.setAttribute('stroke', 'oklch(14% 0.03 30)'); robe.setAttribute('stroke-width', '0.9');
-    m.appendChild(robe);
-    const fold = document.createElementNS(NS, 'path');
-    fold.setAttribute('d', `M ${cx - rx * 0.72} ${cy - 6 * s} C ${cx - rx * 0.3} ${cy - 10 * s} ${cx + rx * 0.3} ${cy - 10 * s} ${cx + rx * 0.72} ${cy - 6 * s}`);
-    fold.setAttribute('fill', 'none'); fold.setAttribute('stroke', 'oklch(72% 0.12 78)');
-    fold.setAttribute('stroke-width', '1'); fold.setAttribute('opacity', (0.16 + 0.06 * (1 - r / 8)).toFixed(2));
-    m.appendChild(fold);
-    const headG = document.createElementNS(NS, 'g');
-    headG.setAttribute('class', 'head');
-    const head = document.createElementNS(NS, 'circle');
-    head.setAttribute('cx', cx); head.setAttribute('cy', cy - 23 * s); head.setAttribute('r', 8.2 * s);
-    head.setAttribute('fill', `oklch(${(46 + (hash01(index + 50) - 0.5) * 6).toFixed(1)}% 0.035 58)`);
-    head.setAttribute('stroke', 'oklch(20% 0.025 52)'); head.setAttribute('stroke-width', '0.8');
-    const hl = document.createElementNS(NS, 'path');
-    hl.setAttribute('d', `M ${cx - 4.5 * s} ${cy - 28.5 * s} a ${5.5 * s} ${5.5 * s} 0 0 1 ${9 * s} 0`);
-    hl.setAttribute('fill', 'none'); hl.setAttribute('stroke', 'oklch(88% 0.08 82)');
-    hl.setAttribute('stroke-width', '1.1'); hl.setAttribute('opacity', (0.28 + 0.1 * (1 - r / 8)).toFixed(2));
-    headG.appendChild(head); headG.appendChild(hl);
-    m.appendChild(headG);
+    /* Figur: Projekt-Illustration (monkback.webp), gemeinsame Datei für alle Plätze */
+    const img = document.createElementNS(NS, 'image');
+    img.setAttribute('href', '/assets/monkback.webp');
+    img.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    const ih = 44 * s, iw = ih * (1127 / 1395);
+    img.setAttribute('x', (cx - iw / 2).toFixed(1));
+    img.setAttribute('y', (cy - 33 * s).toFixed(1));
+    img.setAttribute('width', iw.toFixed(1));
+    img.setAttribute('height', ih.toFixed(1));
+    m.appendChild(img);
     const bowl = document.createElementNS(NS, 'g');
     bowl.setAttribute('class', 'bowl');
     const be = document.createElementNS(NS, 'ellipse');

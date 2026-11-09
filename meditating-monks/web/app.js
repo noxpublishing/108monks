@@ -5,7 +5,6 @@ import { Room } from './room.js';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('de-DE');
 const monkShape = $('monk-shape').innerHTML;
-document.querySelector('.monk-illustration').innerHTML = monkShape;
 const audio = new AudioRoom(message => $('audio-status').textContent = message);
 let bootstrap, tl, state, receivedAt = 0, selected = 0, filter = 'all', page = 0, tiles = new Map();
 let gridIds = '', selectedPhaseKey = '', eventSource, pollTimer, lastRender = 0, networkTimer;
@@ -54,6 +53,21 @@ function makeMonkButton(index) {
   button.addEventListener('click', () => { selected = index; selectedPhaseKey = ''; render(true); });
   return button;
 }
+/* Versammlung hinter dem ausgewählten Mönch: sieben Frontansichten,
+   deterministisch versetzt (kein Zufall je Renderdurchlauf). */
+function buildShrineCrowd() {
+  const crowd = $('dw-crowd');
+  const offsets = [-34, -24, -15, -8, 15, 24, 34];
+  offsets.forEach((x, i) => {
+    const img = document.createElement('img');
+    img.src = '/assets/monkfront.webp';
+    img.alt = '';
+    img.style.setProperty('--x', x + '%');
+    img.style.setProperty('--k', (0.8 + ((i * 37) % 20) / 50).toFixed(2));
+    img.style.setProperty('--o', (0.82 + ((i * 53) % 10) / 45).toFixed(2));
+    crowd.appendChild(img);
+  });
+}
 function paintPose(element, pos) {
   const kind = displayKind(pos.phase);
   if (element.dataset.phase !== pos.phase.id) {
@@ -95,9 +109,9 @@ function renderSelected() {
     $('selected-phase').textContent = p.label;
     $('selected-tibetan').textContent = p.tibetan || ''; $('selected-tibetan').hidden = !p.tibetan;
     $('phase-kicker').textContent = `ABSCHNITT ${pos.index + 1} VON ${tl.phases.length}`;
+    $('shrine').setAttribute('aria-label', `Einzelansicht · Mönch ${String(selected + 1).padStart(3, '0')} · Abschnitt: ${p.label}. Buddha über Padmasambhava, dahinter die Versammlung, vorn der ausgewählte digitale Mönch.`);
     document.querySelectorAll('.phase-list li').forEach((li, i) => { li.classList.toggle('current', i === pos.index); if (i === pos.index) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current'); });
   }
-  paintPose($('portrait'), pos);
   const text = p.reflections?.length ? p.reflections[Math.min(p.reflections.length - 1, Math.floor(pos.elapsed / p.duration_ms * p.reflections.length))] : p.text;
   if ($('selected-text').textContent !== text) $('selected-text').textContent = text;
   $('phase-progress-bar').style.width = `${pos.elapsed / p.duration_ms * 100}%`;
@@ -261,6 +275,7 @@ async function init() {
     populatePhases();
     room = new Room($('room-viewport'), { onSelect: index => { selected = index; selectedPhaseKey = ''; render(true); } });
     room.build(state.monks);
+    buildShrineCrowd();
     room.setBubbles(roomPrefs.bubbles); room.setCalm(roomPrefs.calm);
     $('room-bubbles').checked = roomPrefs.bubbles; $('room-calm').checked = roomPrefs.calm;
     $('room-note').textContent = state.monks > 108

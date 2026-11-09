@@ -78,3 +78,23 @@
   .monastery-layout{grid-template-columns:minmax(0,1fr)}
   .rr-scroll{height:42vh}
 }
+
+/* ============================================================
+   Einzelansicht · Schrein-Komposition (Buddha > Padmasambhava >
+   Versammlung > gewählter Mönch) aus Projekt-Illustrationen.
+   ============================================================ */
+.portrait.shrine-portrait{display:block;height:auto;background:none;padding:22px 23px 0}
+.shrine{position:relative;height:min(420px,60vh);border-radius:11px;overflow:hidden;background:radial-gradient(130% 95% at 50% -8%,oklch(27% .05 62) 0%,oklch(19% .024 56) 55%,oklch(15% .02 54) 100%)}
+.shrine::after{content:'';position:absolute;inset:0;background:radial-gradient(80% 62% at 50% 108%,transparent 55%,oklch(11% .018 52 / .5) 100%);pointer-events:none;z-index:6}
+.shrine img{position:absolute;left:50%;transform:translateX(-50%);-webkit-user-drag:none;user-select:none}
+.view-card .portrait-caption{position:static;margin-top:9px;text-align:center;font-size:8px;letter-spacing:1.1px;color:#8f816d;padding-bottom:18px}
+.dw-buddha{top:2%;height:74%;z-index:1;filter:brightness(1.05)}
+.dw-guru{top:15%;height:54%;z-index:2}
+.dw-crowd{position:absolute;left:0;right:0;bottom:31%;height:34%;z-index:3;pointer-events:none}
+.dw-crowd img{position:absolute;bottom:-2%;left:50%;height:100%;transform:translateX(calc(-50% + var(--x,0%))) scale(var(--k,.9));transform-origin:50% 100%;opacity:var(--o,.88)}
+.dw-self{bottom:-4%;height:62%;z-index:5;animation:shrineBreath 6.5s ease-in-out infinite alternate}
+@keyframes shrineBreath{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){.dw-self{animation:none}}
+/* Bild-Figuren: sanftere Niederwerfung im Raum */
+@keyframes roomProstrate{0%,8%{transform:translateY(0) scaleY(1)}14%,20%{transform:translateY(4px) scaleY(.86)}32%,38%{transform:translateY(5px) scaleY(.74)}50%,58%{transform:translateY(4px) scaleY(.86)}68%,100%{transform:translateY(0) scaleY(1)}}
+.room-viewport.calm .p-prost .m{transform:translateY(3px) scaleY(.84)}
