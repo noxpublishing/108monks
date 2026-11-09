@@ -117,7 +117,10 @@ function renderSelected() {
   $('phase-progress-bar').style.width = `${pos.elapsed / p.duration_ms * 100}%`;
   $('phase-progress-label').textContent = p.unit_ms ? `Einheit ${Math.floor(pos.elapsed / p.unit_ms) + 1} / ${p.duration_ms / p.unit_ms}` : 'Im aktuellen Abschnitt';
   $('phase-remaining').textContent = `${duration(p.duration_ms - pos.elapsed)} verbleibend`;
-  if (audio.enabled && !stale()) audio.update([pos], bootstrap.audio, state.run_id);
+  if (audio.enabled && !stale()) {
+    const choirOffset = cohortOffset(pos.monkId, ensemble) / 1000;
+    audio.update([{ ...pos, choirOffset }], bootstrap.audio, state.run_id);
+  }
 }
 function render(force = false) {
   if (!state || !tl) return;
@@ -168,7 +171,7 @@ $('audio-toggle').addEventListener('click', async () => {
   const mode = $('audio-mode').value;
   if (mode === 'recording' && !bootstrap.audio.length) { $('audio-status').textContent = 'Noch keine Aufnahme hinterlegt. Wähle für einen Funktionstest die lokale TTS-Demo.'; return; }
   try {
-    await audio.start(mode, audio.localVoices()[Number($('tts-voice').value)]);
+    if (!await audio.start(mode, audio.localVoices()[Number($('tts-voice').value)])) return;
     $('audio-toggle').textContent = '■ Audio stoppen'; $('audio-toggle').setAttribute('aria-pressed', 'true');
     $('volume-bg').disabled = mode === 'tts';
     renderSelected();
@@ -214,7 +217,7 @@ $('room-calm').addEventListener('change', event => {
 window.addEventListener('keydown', event => {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
   if (viewMode !== 'room' || !room) return;
-  room.arrows(event, selected, index => { selected = index; selectedPhaseKey = ''; render(true); });
+  room.arrows(event, index => { selected = index; selectedPhaseKey = ''; render(true); });
 });
 
 function malaRender() {
@@ -258,7 +261,9 @@ document.addEventListener('visibilitychange', async () => {
   if (document.hidden) { stopAudio('Audio pausiert, weil die Seite nicht sichtbar ist.'); return; }
   try { acceptState(await getJSON('/api/state')); render(true); } catch (_) {}
 });
-window.addEventListener('pagehide', () => { audio.stop(); eventSource?.close(); clearInterval(pollTimer); clearInterval(networkTimer); });
+window.addEventListener('pagehide', () => {
+  stopAudio(); eventSource?.close(); clearInterval(pollTimer); pollTimer = null; clearInterval(networkTimer);
+});
 
 window.addEventListener('pageshow', event => { if (event.persisted && state) { connectEvents(); updateNetwork(); networkTimer = setInterval(updateNetwork, 30000); } });
 

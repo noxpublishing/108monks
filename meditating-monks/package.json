@@ -1,1 +1,1 @@
-{"name":"meditating-monks-browser","private":true,"type":"module","scripts":{"test":"node --test tests/engine.test.js"},"engines":{"node":">=20"}}
+{"name":"meditating-monks-browser","private":true,"type":"module","scripts":{"test":"node --test"},"engines":{"node":">=20"}}

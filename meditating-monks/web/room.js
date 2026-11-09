@@ -172,7 +172,8 @@ export class Room {
     this.bubbles = false;
     this.calm = false;
     this.enlarged = false;
-    this.escapeBound = null;
+    this.enlargedKeydown = null;
+    this.inertSiblings = [];
   }
 
   build(monks) {
@@ -194,8 +195,20 @@ export class Room {
     this.seats.sort((a, b) => a.index - b.index);
     const enlarge = this.container.querySelector('.rr-enlarge');
     enlarge.addEventListener('click', () => this.setEnlarged(!this.enlarged));
-    this.escapeBound = (e) => { if (e.key === 'Escape' && this.enlarged) this.setEnlarged(false); };
-    window.addEventListener('keydown', this.escapeBound);
+    this.enlargedKeydown = (event) => {
+      if (!this.enlarged || event.defaultPrevented) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.setEnlarged(false);
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        // The roving seat and the close button are the two tab stops.
+        const seat = this.seats.find(({ g }) => g.tabIndex === 0);
+        const next = document.activeElement === enlarge ? seat?.g : enlarge;
+        (next ?? enlarge).focus();
+      }
+    };
+    window.addEventListener('keydown', this.enlargedKeydown);
   }
 
   _seat(index, r, c) {
@@ -272,6 +285,7 @@ export class Room {
   /** Regelmäßiger Aktualisierungslauf: Haltung, Blase, Dämmung, Auswahl. */
   tick(getPosition, selected, filter, kindsOf) {
     this.filter = filter;
+    const tabStop = this.seats[selected]?.index ?? 0;
     for (const seat of this.seats) {
       const pos = getPosition(seat.index);
       if (!pos) continue;
@@ -293,19 +307,19 @@ export class Room {
       if (on !== seat.selected) {
         seat.selected = on;
         seat.g.classList.toggle('selected', on);
-        seat.g.setAttribute('tabindex', on ? '0' : '-1');
-        if (on) seat.g.focus({ preventScroll: true });
       }
+      const tabIndex = seat.index === tabStop ? 0 : -1;
+      if (seat.g.tabIndex !== tabIndex) seat.g.tabIndex = tabIndex;
       const label = `Mönch ${String(seat.index + 1).padStart(3, '0')} · ${pos.phase.label}${on ? ' · ausgewählt' : ''}`;
       if (label !== seat.aria) { seat.aria = label; seat.g.setAttribute('aria-label', label); seat.g.setAttribute('aria-pressed', String(on)); }
     }
   }
 
-  arrows(event, selected, onSelect) {
-    const seat = this.seats[selected] || this.seats[0];
-    const inRoom = this.container.contains(event.target) || event.target === document.body;
-    if (!inRoom) return false;
-    const row = seat ? seat.r : 0, col = seat ? seat.c : 0;
+  arrows(event, onSelect) {
+    if (!(event.target instanceof Element)) return false;
+    const seat = this.seats[Number(event.target.getAttribute('data-i'))];
+    if (seat?.g !== event.target) return false;
+    const row = seat.r, col = seat.c;
     let r = row, c = col;
     if (event.key === 'ArrowLeft') c = Math.max(0, col - 1);
     else if (event.key === 'ArrowRight') c = Math.min(COLS - 1, col + 1);
@@ -313,7 +327,9 @@ export class Room {
     else if (event.key === 'ArrowDown') r = Math.min(this.rows - 1, row + 1);
     else return false;
     event.preventDefault();
-    onSelect(Math.min(this.monks - 1, r * COLS + c));
+    const index = Math.min(this.monks - 1, r * COLS + c);
+    onSelect(index);
+    this.seats[index].g.focus();
     return true;
   }
 
@@ -325,13 +341,36 @@ export class Room {
   }
   setCalm(on) { this.calm = on; this.container.classList.toggle('calm', on); }
   setEnlarged(on) {
+    if (on === this.enlarged) return;
     this.enlarged = on;
     this.container.classList.toggle('enlarged', on);
+    if (on) {
+      this.container.setAttribute('role', 'dialog');
+      this.container.setAttribute('aria-label', 'Vergrößerter Ritualraum');
+      this.container.setAttribute('aria-modal', 'true');
+      for (let branch = this.container; branch !== document.body; branch = branch.parentElement) {
+        for (const sibling of branch.parentElement.children) {
+          if (sibling !== branch && sibling instanceof HTMLElement && !sibling.inert) {
+            sibling.inert = true;
+            this.inertSiblings.push(sibling);
+          }
+        }
+      }
+    } else {
+      this.container.removeAttribute('role');
+      this.container.removeAttribute('aria-label');
+      this.container.removeAttribute('aria-modal');
+      for (const sibling of this.inertSiblings) sibling.inert = false;
+      this.inertSiblings = [];
+    }
     const btn = this.container.querySelector('.rr-enlarge');
-    if (btn) { btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'Ansicht zurückkehren' : 'Raum vergrößern'; }
+    btn.setAttribute('aria-pressed', String(on));
+    btn.textContent = on ? 'Raum verkleinern' : 'Raum vergrößern';
+    btn.focus({ preventScroll: true });
   }
   destroy() {
-    if (this.escapeBound) window.removeEventListener('keydown', this.escapeBound);
+    if (this.enlarged) this.setEnlarged(false);
+    if (this.enlargedKeydown) window.removeEventListener('keydown', this.enlargedKeydown);
     this.container.replaceChildren();
   }
 }

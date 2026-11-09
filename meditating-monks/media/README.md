@@ -5,11 +5,11 @@ Es ist bewusst keine fremde Aufnahme enthalten. Ein zugängliches Video oder MP3
 1. Lege eine berechtigt verwendbare WAV-, MP3-, OGG-, M4A- oder FLAC-Datei hier ab. WAV ist für den ersten Test am unkompliziertesten; Browser-Codecs variieren.
 2. Kopiere `manifest.example.json` nach `manifest.json`.
 3. Ersetze Dateiname, Titel, Interpret, Lizenz, Erlaubnisnotiz und Loop-Grenzen durch echte Angaben.
-4. Der Loop umfasst genau eine vollständige Rezitation. Seine Länge muss innerhalb 50 ms mit `unit_ms / 1000` der passenden Phase übereinstimmen. Der Standard verwendet 8 Sekunden; das ist keine vorgeschriebene traditionelle Geschwindigkeit.
+4. Der Loop umfasst genau eine vollständige Rezitation. Seine Länge darf höchstens 50 ms von `unit_ms / 1000` der passenden Phase abweichen. Im mitgelieferten Profil dauert ein Mani-Loop 3,332 Sekunden.
 5. Hat die Aufnahme einen anderen Takt, passe `unit_ms` und `duration_ms = unit_ms × Wiederholungen` im Praxisprofil an und archiviere den alten Lauf. Nicht den Gesang künstlich beschleunigen.
 6. Server neu starten. Eine fehlende Datei oder unvollständige Rechteangabe führt bewusst zu einem Konfigurationsfehler.
 
-Der Browser mischt auf Wunsch bis zu drei zeitversetzte Abspielungen derselben Aufnahme. Das ist kein echter Chor verschiedener Sänger. Der Player verändert keine Tonhöhe. Saubere Loop-Schnittpunkte musst du im Audio selbst vorbereiten; es gibt keinen automatischen nahtlosen Schnitt.
+Für Loops bietet der Browser eine Einzelstimme, einen Sparmodus mit bis zu zwölf und einen Vollmodus mit bis zu 108 Wiedergabepositionen. Diese Zahlen schließen die Vordergrundstimme ein. Der Raumchor mischt zeitversetzte Abspielungen der Aufnahme und gegebenenfalls ihrer freigegebenen Varianten. Bereite die Loop-Schnittpunkte in der Audiodatei vor. Der Player übernimmt die Aufnahme in Originaltempo und Tonhöhe.
 
 Dateien werden erst auf Benutzeraktion geladen und abgespielt. Keine serverseitige Dauersynthese. TTS ist nur eine separat beschriftete Sprech-Demo mit vom Browser als lokal markierten Stimmen. Keine Garantie für tibetische Aussprache; keine tatsächliche Stimme wird geklont.
 

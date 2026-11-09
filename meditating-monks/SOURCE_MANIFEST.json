@@ -1,7 +1,6 @@
 [
   ".dockerignore",
   ".env.example",
-  ".github/workflows/ci.yml",
   ".gitignore",
   "CHANGELOG.md",
   "CONTRIBUTING.md",
@@ -47,6 +46,7 @@
   "requirements.txt",
   "scripts/benchmark.py",
   "scripts/browser_smoke.py",
+  "tests/audio.test.js",
   "tests/conftest.py",
   "tests/engine.test.js",
   "tests/test_api.py",
