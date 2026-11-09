@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#241a12">
+<title>Meditating Monks · Ritualraum (Demo v0.2.0)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23241a12'/%3E%3Cpath d='M16 6c2.5 3.4 6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 3.5-7.6 6-11z' fill='%23e2a558'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Warm Kerzenlicht-Palette (OKLCH) */
+    --bg-0: oklch(16% 0.015 55);
+    --bg-01: oklch(18.5% 0.016 55);
+    --surface-1: oklch(20.5% 0.018 56);
+    --surface-2: oklch(24% 0.02 58);
+    --line: oklch(33% 0.024 62);
+    --line-soft: oklch(28% 0.02 60);
+    --ink: oklch(91% 0.022 85);
+    --ink-body: oklch(82% 0.016 78);
+    --ink-muted: oklch(70% 0.022 72);
+    --ink-faint: oklch(62% 0.02 68);
+    --flame: oklch(80% 0.128 78);
+    --flame-soft: oklch(74% 0.115 75);
+    --flame-deep: oklch(63% 0.12 62);
+    --focus-ring: oklch(86% 0.12 85);
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --font-display: "Marcellus", Georgia, "Times New Roman", serif;
+    --font-body: "Alegreya Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Spline Sans Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--bg-0);
+    color: var(--ink-body);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    font-kerning: normal;
+  }
+  body { display: flex; flex-direction: column; }
+
+  /* ---------- Header ---------- */
+  header {
+    position: relative;
+    background: linear-gradient(oklch(21% 0.018 57), var(--bg-01));
+    border-bottom: 1px solid var(--line-soft);
+    padding: 14px 20px 10px;
+    z-index: 50;
+  }
+  .head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.22rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .brand-sub {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .widmung {
+    margin: 0;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--ink-muted);
+    max-width: 52ch;
+    text-align: right;
+  }
+
+  .phase-bar {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    flex-wrap: wrap;
+  }
+  .phase-nav {
+    display: flex;
+    gap: 4px;
+  }
+  .chev {
+    width: 30px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 150ms, border-color 150ms;
+  }
+  .chev:hover { color: var(--ink); border-color: var(--line); }
+  .chev:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+  #phaseName {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    letter-spacing: 0.045em;
+    color: var(--flame-soft);
+    min-width: 15ch;
+  }
+  #phaseName.swap { animation: phaseswap 700ms var(--ease-out-soft); }
+  @keyframes phaseswap {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chant-pill {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--flame);
+    border: 1px solid oklch(45% 0.06 70);
+    border-radius: 999px;
+    padding: 3px 12px 4px;
+    white-space: nowrap;
+  }
+  .timer {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.18rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  #maniUnits {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .listen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid oklch(52% 0.09 70);
+    background: oklch(28% 0.04 60);
+    color: var(--flame);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 200ms, color 200ms, border-color 200ms;
+  }
+  .listen-btn:hover { background: oklch(33% 0.05 62); }
+  .listen-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .listen-btn.on {
+    background: oklch(34% 0.06 65);
+    border-color: var(--flame-deep);
+    color: var(--flame-soft);
+  }
+  .listen-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--flame-deep);
+    flex: none;
+  }
+  .listen-btn.on .listen-dot { background: var(--flame); }
+
+  .cycle-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: oklch(24% 0.02 58);
+  }
+  .cycle-line span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--flame-deep), var(--flame));
+    transition: width 900ms linear;
+  }
+
+  /* ---------- Layout ---------- */
+  main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  header { flex: none; }
+
+  .raum-wrapper {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 18px 10px 14px;
+    background:
+      radial-gradient(120% 90% at 50% 0%, oklch(19% 0.02 60) 0%, var(--bg-0) 70%);
+  }
+  svg.raum {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    display: block;
+  }
+  main.enlarged .raum-wrapper { padding: 0; overflow: auto; }
+  main.enlarged svg.raum { width: 100%; max-height: none; }
+  main.enlarged aside.panel { display: none; }
+  .exit-enlarge {
+    display: none;
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 45;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: oklch(23% 0.022 57 / 0.92);
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 0.84rem;
+    cursor: pointer;
+    transition: color 150ms, background 150ms;
+  }
+  .exit-enlarge:hover { color: var(--ink); background: var(--surface-2); }
+  .exit-enlarge:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  main.enlarged .exit-enlarge { display: inline-flex; }
+
+  /* ---------- Panel ---------- */
+  aside.panel {
+    width: 344px;
+    flex: none;
+    background: var(--surface-1);
+    border-left: 1px solid var(--line-soft);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 40;
+    padding: 18px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .panel section { border: 0; margin: 0; padding: 0; }
+  .panel .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .sec-title {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+  .sec-note { font-size: 0.72rem; color: var(--ink-faint); font-style: italic; }
+
+  .monk-card {
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+  }
+  .monk-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  #panelTitle {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.02rem;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+  .seat-tag {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--flame);
+    white-space: nowrap;
+  }
+  #panelMulti { margin: 4px 0 2px; font-size: 0.85rem; color: var(--ink-muted); }
+  #panelChant {
+    display: inline-block;
+    margin: 6px 0 10px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--flame);
+    border: 1px solid oklch(45% 0.06 70);
+    border-radius: 999px;
+    padding: 2px 10px 3px;
+  }
+  #narration {
+    margin: 10px 0 4px;
+    padding: 0;
+    font-size: 0.92rem;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--ink-body);
+  }
+  .narr-src { font-size: 0.72rem; color: var(--ink-faint); }
+  .monk-nav { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-quiet {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-body);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 150ms, color 150ms, border-color 150ms;
+  }
+  .btn-quiet:hover { background: var(--surface-2); color: var(--ink); }
+  .btn-quiet:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+  /* Hören */
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+  }
+  .ctrl-row label:first-child { font-size: 0.87rem; color: var(--ink-body); min-width: 118px; cursor: default; }
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--flame-deep);
+    height: 22px;
+    cursor: pointer;
+    background: transparent;
+  }
+  input[type=range]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+  .vol-val {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    min-width: 3.2ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .toggles { display: grid; gap: 8px; margin-top: 8px; }
+  .tog {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.87rem;
+    color: var(--ink-body);
+    cursor: pointer;
+    user-select: none;
+  }
+  .tog input { accent-color: var(--flame-deep); width: 15px; height: 15px; cursor: pointer; }
+  .tog:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 5px; }
+  .tog .hint { display: block; font-size: 0.72rem; color: var(--ink-faint); }
+  .room-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .room-actions .btn-quiet { flex: none; }
+
+  /* Mala */
+  .mala {
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 14px 16px 12px;
+    text-align: center;
+  }
+  #malaCount {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.95rem;
+    font-weight: 500;
+    color: var(--flame-soft);
+    line-height: 1.1;
+  }
+  .mala-btns { display: flex; gap: 8px; margin-top: 10px; justify-content: center; }
+  .mala-btns .btn-quiet { flex: none; min-width: 88px; }
+  .btn-plus {
+    background: oklch(30% 0.045 62);
+    border-color: oklch(45% 0.07 68);
+    color: var(--flame-soft);
+  }
+  .btn-plus:hover { background: oklch(35% 0.055 64); }
+
+  .statusline {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+
+  /* ---------- Mobile ---------- */
+  .panel-fab { display: none; }
+  @media (max-width: 780px) {
+    header { padding: 10px 14px 8px; }
+    .head-row { align-items: flex-start; gap: 8px; }
+    .brand { gap: 8px; }
+    h1 { font-size: 0.98rem; }
+    .widmung { display: none; }
+    .phase-bar { gap: 8px; margin-top: 6px; min-height: 34px; }
+    #phaseName { min-width: 0; font-size: 0.95rem; }
+    .timer { font-size: 1rem; }
+    .listen-btn { padding: 6px 13px; font-size: 0.8rem; }
+    .panel-fab {
+      display: inline-flex;
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 70;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid oklch(52% 0.09 70);
+      background: oklch(26% 0.04 60);
+      color: var(--flame-soft);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 6px 24px oklch(10% 0.02 55 / 0.55);
+    }
+    .panel-fab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    aside.panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: auto;
+      max-height: 72dvh;
+      transform: translateY(104%);
+      transition: transform 280ms var(--ease-out-soft);
+      border-left: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -12px 40px oklch(8% 0.02 55 / 0.6);
+      padding-top: 8px;
+      z-index: 75;
+    }
+    aside.panel.open { transform: translateY(0); }
+    .sheet-grip {
+      display: block;
+      flex: none;
+      width: 44px;
+      height: 26px;
+      position: relative;
+      margin: 4px auto 4px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+    .sheet-grip::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 4px;
+      border-radius: 999px;
+      transform: translateY(-50%);
+      background: var(--line);
+    }
+    .sheet-grip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: 999px; }
+    aside.panel > * { flex: none; }
+    /* Auf Mobil bleibt das Panel auch in der vergrößerten Ansicht als Blatt erreichbar */
+    main.enlarged aside.panel { display: flex; }
+    .raum-wrapper { padding: 8px 0 8px; justify-content: flex-start; }
+    /* Sitzordnung bleibt im internen Scrollbereich lesbar (Spezifikation §1) */
+    svg.raum { width: 900px; min-width: 900px; height: auto; max-height: none; }
+  }
+  @media (min-width: 781px) { .sheet-grip { display: none; } }
+
+  /* ---------- SVG-Szene ---------- */
+  .sitz { cursor: pointer; outline: none; }
+  .sitz:focus-visible .halo { opacity: 0.85; }
+  .sitz:focus-visible .robe { stroke: var(--focus-ring); stroke-width: 1.4; }
+
+  .m {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: breathe var(--dur, 8s) ease-in-out var(--del, 0s) infinite alternate;
+  }
+  @keyframes breathe {
+    from { transform: translateY(0px) scaleY(1); }
+    to { transform: translateY(calc(var(--amp, 1.3) * -1px)) scaleY(1.045); }
+  }
+
+  /* Gesten (stilisierte Kennzeichnung, keine Unterweisung) */
+  .m { transition: transform 900ms var(--ease-out-soft); }
+  .head { transition: transform 900ms var(--ease-out-soft); transform-box: fill-box; transform-origin: 50% 100%; }
+  .p-bow .m { transform: translateY(1.6px) scaleY(0.95); }
+  .p-bow .head { transform: translateY(2.2px); }
+  .p-low .head { transform: translateY(3.2px); }
+  .p-low .m { transform: translateY(0.8px) scaleY(0.92); }
+  .p-prost .m { animation: prostrate 16s ease-in-out infinite; }
+  @keyframes prostrate {
+    0%, 8% { transform: translateY(0) scaleY(1); }
+    14%, 20% { transform: translateY(4.5px) scaleY(0.8); }
+    32%, 38% { transform: translateY(5.5px) scaleY(0.66); }
+    50%, 58% { transform: translateY(4.5px) scaleY(0.8); }
+    68%, 100% { transform: translateY(0) scaleY(1); }
+  }
+  .p-prost .head { animation: headlower 16s ease-in-out infinite; }
+  @keyframes headlower {
+    0%, 8% { transform: translateY(0); }
+    32%, 38% { transform: translateY(7px); }
+    68%, 100% { transform: translateY(0); }
+  }
+  .bowl { opacity: 0; transition: opacity 600ms; }
+  .p-off .bowl { opacity: 1; animation: bowlrise 4.5s ease-in-out infinite alternate; }
+  @keyframes bowlrise { from { transform: translateY(0); } to { transform: translateY(-3.2px); } }
+  .p-still .m { animation-play-state: paused; }
+
+  /* Ruhige Darstellung (reduzierte Bewegung) – schaltet alles auf statische Haltungen */
+  html.calm .m, html.calm .head, html.calm .bowl { animation: none !important; transition: none; }
+  html.calm .p-prost .m { transform: translateY(3px) scaleY(0.82); }
+  html.calm .p-prost .head { transform: translateY(4px); }
+  html.calm .glow-pulse { animation: none !important; opacity: 0.16; }
+  html.calm .sitz { transition: none; }
+  .halo { opacity: 0; transition: opacity 400ms ease-out; pointer-events: none; }
+  .chip { pointer-events: none; display: none; }
+  html.show-chips .chip { display: block; }
+  .chip-inner {
+    filter: drop-shadow(0 2px 2.5px oklch(8% 0.02 50 / 0.4));
+    animation: chippop 340ms var(--ease-out-soft) both;
+    animation-delay: var(--d, 0ms);
+  }
+  @keyframes chippop {
+    from { opacity: 0; transform: translateY(3.5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chip .chip-bg { fill: oklch(22% 0.03 65); stroke: oklch(42% 0.06 68); stroke-linejoin: round; }
+  .chip text { fill: var(--ink-muted); font-size: 9.5px; font-family: var(--font-mono); text-anchor: middle; }
+  .sitz.selected .chip .chip-bg { fill: oklch(30% 0.05 68); stroke: oklch(62% 0.1 72); }
+  .sitz.selected .chip text { fill: oklch(88% 0.06 90); }
+  html.calm .chip-inner { animation: none !important; }
+
+  .glow-pulse { animation: glowbreathe 13s ease-in-out infinite alternate; }
+  @keyframes glowbreathe { from { opacity: 0.13; } to { opacity: 0.2; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m, .head, .bowl, .p-prost .m, .p-prost .head, .glow-pulse, #phaseName.swap, .chip-inner { animation: none !important; transition: none !important; }
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div class="head-row">
+    <div class="brand">
+      <h1>Meditating Monks</h1>
+      <span class="brand-sub">Ritualraum · Demo</span>
+    </div>
+    <p class="widmung">Ein kontinuierlicher digitaler Raum des Mitgefühls, von Menschen geschaffen und gewidmet.</p>
+  </div>
+  <div class="phase-bar">
+    <span class="phase-nav">
+      <button class="chev" id="phasePrev" aria-label="Zum vorherigen Abschnitt (Demo-Kontrolle)">‹</button>
+      <button class="chev" id="phaseNext" aria-label="Zum nächsten Abschnitt (Demo-Kontrolle)">›</button>
+    </span>
+    <span id="phaseName" aria-live="polite">Ankommen</span>
+    <span class="chant-pill" id="chantPill">Arriving</span>
+    <span id="maniUnits" class="hidden"></span>
+    <span class="timer" id="timer">–:–</span>
+    <button class="listen-btn" id="btnListen" aria-pressed="false">
+      <span class="listen-dot" aria-hidden="true"></span>
+      <span id="listenLabel">Zuhören</span>
+    </button>
+  </div>
+  <div class="cycle-line" aria-hidden="true"><span id="cycleFill"></span></div>
+</header>
+
+<main id="main">
+  <div class="raum-wrapper" id="raumWrapper">
+    <svg class="raum" id="raumSvg" viewBox="0 0 1100 780" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Klosterraum mit 108 Sitzplätzen, zum Altar hin ausgerichtet">
+      <defs>
+        <radialGradient id="wallGlow" cx="50%" cy="22%" r="85%">
+          <stop offset="0%" stop-color="oklch(31% 0.05 62)"/>
+          <stop offset="55%" stop-color="oklch(23% 0.03 58)"/>
+          <stop offset="100%" stop-color="oklch(17% 0.018 55)"/>
+        </radialGradient>
+        <linearGradient id="wallTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="oklch(12% 0.015 55)" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="oklch(12% 0.015 55)" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="floorGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="oklch(26% 0.035 55)"/>
+          <stop offset="60%" stop-color="oklch(21% 0.03 54)"/>
+          <stop offset="100%" stop-color="oklch(17.5% 0.024 54)"/>
+        </linearGradient>
+        <radialGradient id="altarWash" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="oklch(72% 0.13 75)" stop-opacity="0.5"/>
+          <stop offset="55%" stop-color="oklch(60% 0.11 68)" stop-opacity="0.16"/>
+          <stop offset="100%" stop-color="oklch(50% 0.08 60)" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="lampHalo" cx="50%" cy="55%" r="50%">
+          <stop offset="0%" stop-color="oklch(85% 0.12 85)" stop-opacity="0.9"/>
+          <stop offset="40%" stop-color="oklch(78% 0.13 78)" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="oklch(70% 0.12 72)" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="oklch(85% 0.12 88)" stop-opacity="0"/>
+          <stop offset="70%" stop-color="oklch(85% 0.12 88)" stop-opacity="0.1"/>
+          <stop offset="100%" stop-color="oklch(85% 0.12 88)" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="clothGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="oklch(38% 0.07 30)"/>
+          <stop offset="100%" stop-color="oklch(24% 0.05 28)"/>
+        </linearGradient>
+        <linearGradient id="aisleGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="oklch(30% 0.06 32)"/>
+          <stop offset="100%" stop-color="oklch(20% 0.045 30)"/>
+        </linearGradient>
+        <radialGradient id="vignette" cx="50%" cy="42%" r="72%">
+          <stop offset="0%" stop-color="oklch(10% 0.02 50)" stop-opacity="0"/>
+          <stop offset="72%" stop-color="oklch(10% 0.02 50)" stop-opacity="0"/>
+          <stop offset="100%" stop-color="oklch(8% 0.015 50)" stop-opacity="0.5"/>
+        </radialGradient>
+        <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.4"/>
+        </filter>
+        <filter id="softer" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="5"/>
+        </filter>
+      </defs>
+
+      <!-- Rückwand -->
+      <rect x="0" y="0" width="1100" height="312" fill="url(#wallGlow)"/>
+      <rect x="0" y="0" width="1100" height="120" fill="url(#wallTop)"/>
+      <!-- Wandvertäfelung, dezent -->
+      <g stroke="oklch(12% 0.02 52)" stroke-opacity="0.28" stroke-width="1">
+        <path d="M132 24 V 268"/><path d="M264 24 V 268"/><path d="M396 24 V 268"/>
+        <path d="M528 24 V 268"/><path d="M660 24 V 268"/><path d="M792 24 V 268"/><path d="M924 24 V 268"/>
+      </g>
+      <!-- Deckenbalken -->
+      <rect x="0" y="0" width="1100" height="26" fill="oklch(14% 0.02 52)"/>
+      <rect x="0" y="26" width="1100" height="3" fill="oklch(30% 0.04 62)" opacity="0.5"/>
+
+      <!-- Hängende Banners -->
+      <g>
+        <path d="M232 28 h 42 v 96 l -21 14 l -21 -14 z" fill="oklch(26% 0.06 30)" stroke="oklch(45% 0.07 55)" stroke-width="0.8"/>
+        <path d="M253 40 v 74" stroke="oklch(66% 0.09 72)" stroke-width="1" opacity="0.5"/>
+        <circle cx="253" cy="122" r="3" fill="oklch(66% 0.09 72)" opacity="0.6"/>
+        <path d="M826 28 h 42 v 96 l -21 14 l -21 -14 z" fill="oklch(26% 0.06 30)" stroke="oklch(45% 0.07 55)" stroke-width="0.8"/>
+        <path d="M847 40 v 74" stroke="oklch(66% 0.09 72)" stroke-width="1" opacity="0.5"/>
+        <circle cx="847" cy="122" r="3" fill="oklch(66% 0.09 72)" opacity="0.6"/>
+      </g>
+
+      <!-- Seitenpfeiler -->
+      <g>
+        <rect x="36" y="20" width="46" height="288" rx="6" fill="oklch(15% 0.02 52)"/>
+        <rect x="44" y="20" width="10" height="288" fill="oklch(34% 0.045 62)" opacity="0.55"/>
+        <rect x="1018" y="20" width="46" height="288" rx="6" fill="oklch(15% 0.02 52)"/>
+        <rect x="1046" y="20" width="10" height="288" fill="oklch(34% 0.045 62)" opacity="0.55"/>
+        <rect x="150" y="24" width="26" height="282" rx="5" fill="oklch(16% 0.024 54)"/>
+        <rect x="156" y="24" width="6" height="282" fill="oklch(36% 0.05 64)" opacity="0.5"/>
+        <rect x="924" y="24" width="26" height="282" rx="5" fill="oklch(16% 0.024 54)"/>
+        <rect x="938" y="24" width="6" height="282" fill="oklch(36% 0.05 64)" opacity="0.5"/>
+      </g>
+
+      <!-- Altarlicht-Scheibe hinter dem Altar -->
+      <ellipse class="glow-pulse" cx="550" cy="120" rx="330" ry="150" fill="url(#altarWash)"/>
+
+      <!-- Altarstufen -->
+      <path d="M252 258 L 848 258 L 862 292 L 238 292 Z" fill="oklch(30% 0.04 58)" stroke="oklch(20% 0.03 52)" stroke-width="1"/>
+      <path d="M282 214 L 818 214 L 836 258 L 164 258 Z" fill="oklch(34% 0.045 60)" stroke="oklch(22% 0.032 52)" stroke-width="1"/>
+      <path d="M282 214 L 818 214 L 824 228 L 276 228 Z" fill="oklch(40% 0.055 64)" opacity="0.8"/>
+
+      <!-- Altartisch mit Tuch -->
+      <g>
+        <rect x="352" y="128" width="396" height="90" rx="5" fill="oklch(26% 0.03 48)"/>
+        <rect x="352" y="128" width="396" height="10" fill="oklch(46% 0.06 62)" opacity="0.7"/>
+        <path d="M360 150 h 380 v 62 h -380 z" fill="url(#clothGrad)"/>
+        <path d="M360 150 h 380" stroke="oklch(66% 0.09 72)" stroke-width="1.2" opacity="0.55"/>
+        <path d="M360 202 q 40 10 80 0 t 80 0 t 80 0 t 80 0 t 60 0" fill="none" stroke="oklch(30% 0.06 32)" stroke-width="2"/>
+      </g>
+
+      <!-- Thangka-Platzhalter (bewusst gekennzeichnet, siehe Ritualraum-Spezifikation) -->
+      <g>
+        <ellipse cx="548" cy="112" rx="118" ry="86" fill="url(#lampHalo)" opacity="0.5"/>
+        <rect x="488" y="22" width="120" height="108" rx="4" fill="oklch(22% 0.03 55)" stroke="oklch(46% 0.06 62)" stroke-width="2"/>
+        <rect x="496" y="30" width="104" height="92" rx="2" fill="oklch(18% 0.025 55)" stroke="oklch(40% 0.06 60)" stroke-width="0.8" stroke-dasharray="5 5"/>
+        <text x="548" y="70" text-anchor="middle" fill="oklch(72% 0.06 80)" font-size="11" font-family="Alegreya Sans, sans-serif" font-style="italic">Padmasambhava</text>
+        <text x="548" y="86" text-anchor="middle" fill="oklch(58% 0.04 72)" font-size="9" letter-spacing="2">PLATZHALTER</text>
+        <circle cx="488" cy="22" r="3" fill="oklch(62% 0.09 70)"/><circle cx="608" cy="22" r="3" fill="oklch(62% 0.09 70)"/>
+        <circle cx="488" cy="130" r="3" fill="oklch(62% 0.09 70)"/><circle cx="608" cy="130" r="3" fill="oklch(62% 0.09 70)"/>
+      </g>
+
+      <!-- Butterlampen auf dem Altar -->
+      <g id="altarLamps">
+        <g>
+          <ellipse cx="428" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="428" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="428" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="428" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+        <g>
+          <ellipse cx="472" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="472" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="472" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="472" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+        <g>
+          <ellipse cx="516" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="516" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="516" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="516" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+        <g>
+          <ellipse cx="584" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="584" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="584" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="584" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+        <g>
+          <ellipse cx="628" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="628" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="628" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="628" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+        <g>
+          <ellipse cx="672" cy="152" rx="8" ry="3" fill="oklch(38% 0.06 60)"/>
+          <ellipse cx="672" cy="149" rx="5" ry="2.4" fill="oklch(30% 0.05 55)"/>
+          <ellipse cx="672" cy="133" rx="17" ry="20" fill="url(#lampHalo)" opacity="0.5"/>
+          <circle cx="672" cy="144" r="2.6" fill="oklch(90% 0.11 88)"/>
+        </g>
+      </g>
+
+      <!-- Opferschalen & Räuchergefäß -->
+      <g fill="oklch(42% 0.055 62)">
+        <ellipse cx="420" cy="168" rx="6" ry="2.6"/><ellipse cx="460" cy="168" rx="6" ry="2.6"/>
+        <ellipse cx="640" cy="168" rx="6" ry="2.6"/><ellipse cx="680" cy="168" rx="6" ry="2.6"/>
+        <ellipse cx="560" cy="170" rx="4.5" ry="2.4" fill="oklch(50% 0.07 62)"/>
+        <path d="M556 164 q 4 -10 0 -18 q -3.5 -8 1 -14" fill="none" stroke="oklch(80% 0.05 85)" stroke-width="1.6" opacity="0.14" filter="url(#soft)"/>
+        <path d="M560 164 q -3 -11 1.5 -19 q 3 -8 -1 -16" fill="none" stroke="oklch(80% 0.05 85)" stroke-width="1.2" opacity="0.1" filter="url(#soft)"/>
+      </g>
+
+      <!-- Stehlampen neben dem Altar -->
+      <g>
+        <rect x="286" y="196" width="8" height="66" rx="3" fill="oklch(26% 0.04 52)"/>
+        <ellipse cx="290" cy="192" rx="13" ry="5" fill="oklch(40% 0.06 58)"/>
+        <ellipse cx="290" cy="176" rx="26" ry="22" fill="url(#lampHalo)" opacity="0.6"/>
+        <ellipse cx="290" cy="188" rx="9" ry="3.4" fill="oklch(56% 0.09 68)"/>
+        <circle cx="290" cy="184" r="2.8" fill="oklch(92% 0.11 88)"/>
+      </g>
+      <g>
+        <rect x="806" y="196" width="8" height="66" rx="3" fill="oklch(26% 0.04 52)"/>
+        <ellipse cx="810" cy="192" rx="13" ry="5" fill="oklch(40% 0.06 58)"/>
+        <ellipse cx="810" cy="176" rx="26" ry="22" fill="url(#lampHalo)" opacity="0.6"/>
+        <ellipse cx="810" cy="188" rx="9" ry="3.4" fill="oklch(56% 0.09 68)"/>
+        <circle cx="810" cy="184" r="2.8" fill="oklch(92% 0.11 88)"/>
+      </g>
+
+      <!-- Fußboden -->
+      <rect x="0" y="292" width="1100" height="488" fill="url(#floorGrad)"/>
+      <!-- Altarlicht auf dem Boden -->
+      <ellipse cx="550" cy="316" rx="360" ry="72" fill="url(#altarWash)" opacity="0.55"/>
+      <!-- Bodenplanken -->
+      <g stroke="oklch(13% 0.02 52)" stroke-opacity="0.22" stroke-width="1">
+        <path d="M0 336 H 1100"/><path d="M0 372 H 1100"/><path d="M0 410 H 1100"/><path d="M0 452 H 1100"/>
+        <path d="M0 498 H 1100"/><path d="M0 548 H 1100"/><path d="M0 602 H 1100"/><path d="M0 660 H 1100"/><path d="M0 722 H 1100"/>
+      </g>
+      <g stroke="oklch(13% 0.02 52)" stroke-opacity="0.1" stroke-width="1">
+        <path d="M92 336 V 372"/><path d="M296 372 V 410"/><path d="M740 410 V 452"/><path d="M166 548 V 602"/><path d="M920 602 V 660"/><path d="M384 602 V 660"/><path d="M656 660 V 722"/>
+      </g>
+
+      <!-- Läufer im Mittelgang -->
+      <g>
+        <rect x="533" y="300" width="34" height="480" rx="4" fill="url(#aisleGrad)"/>
+        <path d="M539 300 V 780" stroke="oklch(60% 0.08 70)" stroke-width="0.8" opacity="0.4"/>
+        <path d="M561 300 V 780" stroke="oklch(60% 0.08 70)" stroke-width="0.8" opacity="0.4"/>
+        <g fill="oklch(70% 0.09 72)" opacity="0.35">
+          <path d="M550 372 l 5 7 l -5 7 l -5 -7 z"/>
+          <path d="M550 500 l 5 7 l -5 7 l -5 -7 z"/>
+          <path d="M550 628 l 5 7 l -5 7 l -5 -7 z"/>
+          <path d="M550 756 l 5 7 l -5 7 l -5 -7 z"/>
+        </g>
+      </g>
+
+      <!-- Sitzplätze (per JS erzeugt) -->
+      <g id="sitzeGroup"></g>
+
+      <!-- Kerzenlicht-Vignette -->
+      <rect x="0" y="0" width="1100" height="780" fill="url(#vignette)" pointer-events="none"/>
+    </svg>
+    <button class="exit-enlarge" id="exitEnlarge" aria-label="Vergrößerte Ansicht verlassen">↩ Ansicht zurückkehren</button>
+  </div>
+
+  <aside class="panel" id="panel" aria-label="Details und Steuerung">
+    <span class="sheet-grip" role="button" tabindex="0" aria-label="Panel schließen"></span>
+
+    <section aria-labelledby="secMonk">
+      <div class="sec-head"><h2 class="sec-title" id="secMonk">Mönch</h2></div>
+      <div class="monk-card">
+        <div class="monk-head">
+          <h3 id="panelTitle">Sitzplatz auswählen</h3>
+          <span class="seat-tag" id="seatTag">—</span>
+        </div>
+        <p id="panelMulti">Einen Platz im Raum anklicken – oder die Pfeiltasten benutzen.</p>
+        <span id="panelChant" class="hidden"></span>
+        <p id="narration" class="hidden"></p>
+        <p class="narr-src" id="narrSrc"></p>
+        <div class="monk-nav">
+          <button class="btn-quiet" id="monkPrev" aria-label="Vorheriger Mönch">‹ Mönch</button>
+          <button class="btn-quiet" id="monkNext" aria-label="Nächster Mönch">Mönch ›</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="secHear">
+      <div class="sec-head">
+        <h2 class="sec-title" id="secHear">Hören</h2>
+        <span class="sec-note">Demo-Klang, kein Ersatz für Rezitation</span>
+      </div>
+      <div class="ctrl-row">
+        <label for="volMain">Lautstärke</label>
+        <input type="range" id="volMain" min="0" max="1" step="0.05" value="0.7">
+        <span class="vol-val" id="volMainVal">70</span>
+      </div>
+      <div class="ctrl-row">
+        <label for="volBg">Chor im Hintergrund</label>
+        <input type="range" id="volBg" min="0" max="1" step="0.05" value="0.16">
+        <span class="vol-val" id="volBgVal">16</span>
+      </div>
+      <div class="toggles">
+        <label class="tog" for="toggleBubbles">
+          <input type="checkbox" id="toggleBubbles">
+          <span>Sprechblasen zeigen<span class="hint">Aktivität über den Figuren, wellenweise</span></span>
+        </label>
+        <label class="tog" for="toggleCalm">
+          <input type="checkbox" id="toggleCalm">
+          <span>Ruhige Darstellung<span class="hint">Bewegung auf statische Haltungen reduzieren</span></span>
+        </label>
+      </div>
+    </section>
+
+    <section aria-labelledby="secRoom">
+      <div class="sec-head"><h2 class="sec-title" id="secRoom">Raum</h2></div>
+      <div class="room-actions">
+        <button class="btn-quiet" id="btnEnlarge" aria-pressed="false">Raum vergrößern</button>
+      </div>
+      <p class="sec-note" style="margin-top:8px; display:block;">Escape verlässt die vergrößerte Ansicht.</p>
+    </section>
+
+    <section aria-labelledby="secMala">
+      <div class="sec-head">
+        <h2 class="sec-title" id="secMala">Meine Mala</h2>
+        <span class="sec-note">lokal, keine Übertragung</span>
+      </div>
+      <div class="mala">
+        <div id="malaCount">0</div>
+        <div class="mala-btns">
+          <button class="btn-quiet btn-plus" id="malaPlus" aria-label="Eine Wiederholung zählen">+ 1</button>
+          <button class="btn-quiet" id="malaReset">Zurücksetzen</button>
+        </div>
+      </div>
+      <p class="sec-note" style="margin-top:8px; display:block;">Selbst bestätigte Wiederholungen – eine Bedienhilfe, kein Praxisnachweis.</p>
+    </section>
+
+    <p class="statusline" id="status">
+      Demo v0.2.0 · Klang synthetisch (Web Audio) · Altarbild bewusst Platzhalter · keine Rezitationsaufnahme vorhanden.
+      Gemäß Ritualraum-Konzept: Gesten sind stilisierte Kennzeichnungen, keine Unterweisung.
+    </p>
+  </aside>
+
+  <button class="panel-fab" id="panelFab">Details &amp; Mala</button>
+</main>
+
+<script>
+'use strict';
+/* =========================================================
+   Meditating Monks · Ritualraum-Demo v0.2.0
+   Kerzenlicht-Abend. Passend zur Ritualraum-Spezifikation:
+   108 Plätze · Cohort-Versätze 0–1200 ms · kein Autoplay-Audio ·
+   reduzierte Bewegung · Demo-Klang deutlich gekennzeichnet.
+   ========================================================= */
+
+const ROWS = 9, COLS = 12, TOTAL = ROWS * COLS;           // 108
+const SPREAD_MS = 1200, SEED = 108;
+const AISLE = 24;                                          // Mittelgangbreite
+
+/* Stabiler Seed-Hash (kein Math.random) */
+function hash(n) {
+  let h = (n * 2654435761) ^ SEED;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/* ---------------- Abschnitte (Ablauf aus Konzept v0.2.0) ---------------- */
+const PHASES = [
+  { key:'ankunft', name:'Ankommen', label:'Ankunft und Intention', chant:'Arriving',
+    narration:'This space is dedicated to the well-being of all sentient beings. We begin with an intention of compassion.',
+    dur:60, posture:'p-sit' },
+  { key:'ged1', name:'Vier Gedanken · I', label:'Kostbares Menschsein', chant:'Human life',
+    narration:'Appreciate the opportunity offered by this human life.',
+    dur:60, posture:'p-sit' },
+  { key:'ged2', name:'Vier Gedanken · II', label:'Vergänglichkeit', chant:'Impermanence',
+    narration:'Reflect on the impermanence of all conditioned things.',
+    dur:60, posture:'p-sit' },
+  { key:'ged3', name:'Vier Gedanken · III', label:'Ursache und Wirkung', chant:'Karma',
+    narration:'Take responsibility for the consequences of your actions.',
+    dur:60, posture:'p-sit' },
+  { key:'ged4', name:'Vier Gedanken · IV', label:'Unbefriedigtheit', chant:'Samsara',
+    narration:'Consider the unsatisfactoriness of a life shaped by attachment.',
+    dur:60, posture:'p-sit' },
+  { key:'zuflucht', name:'Zuflucht und Niederwerfung', label:'Buddha · Dharma · Sangha', chant:'Taking refuge',
+    narration:'We take refuge in the Buddha, the Dharma, and the Sangha. This bow expresses respect and trust.',
+    dur:120, posture:'p-prost' },
+  { key:'bodhicitta', name:'Bodhicitta', label:'Weisheit und Mitgefühl', chant:'Bodhicitta',
+    narration:'May wisdom and compassion grow, so that we may benefit all sentient beings.',
+    dur:60, posture:'p-sit' },
+  { key:'homage', name:'Erstes Glied · Ehrerbietung', label:'Verbeugung vor den Erwachten', chant:'Homage',
+    narration:'We honour the awakened ones and their path.',
+    dur:45, posture:'p-bow' },
+  { key:'offerings', name:'Zweites Glied · Darbringung', label:'Wasser, Blumen, Licht', chant:'Offering',
+    narration:'Water, flowers, light, and other offerings appear as expressions of generosity.',
+    dur:45, posture:'p-off' },
+  { key:'ackn', name:'Drittes Glied · Bekennen', label:'Ehrliches Bekennen', chant:'Acknowledging',
+    narration:'We honestly acknowledge harmful actions and renew our commitment to act with care.',
+    dur:45, posture:'p-low' },
+  { key:'rejoice', name:'Viertes Glied · Mitfreude', label:'Freude über das Gute', chant:'Rejoicing',
+    narration:'We rejoice in the good that others and we ourselves bring into the world.',
+    dur:45, posture:'p-sit' },
+  { key:'request', name:'Fünftes Glied · Bitte um Lehre', label:'Die Lehre bleibt zugänglich', chant:'Request teaching',
+    narration:'May teachings that lead to liberation remain accessible.',
+    dur:45, posture:'p-bow' },
+  { key:'remain', name:'Sechstes Glied · Bitte zu bleiben', label:'Lehrer mögen bleiben', chant:'Request remain',
+    narration:'May wise and compassionate teachers continue to guide and support all beings.',
+    dur:45, posture:'p-bow' },
+  { key:'dedication', name:'Siebtes Glied · Widmung', label:'Vorläufige Widmung des Verdienstes', chant:'Dedication',
+    narration:'May all that is wholesome contribute to the awakening of all beings.',
+    dur:60, posture:'p-sit' },
+  { key:'mani', name:'Mani-Rezitation', label:'108 Einheiten à 8 Sekunden', chant:'Om mani peme hung',
+    narration:null, dur:864, posture:'p-sit', unitSec:8, units:108,
+    hint:'Mani-Abschnitt: 108 digitale Einheiten. Für eine echte Rezitation fehlt die geprüfte Aufnahme.' },
+  { key:'stilistill', name:'Stille', label:'Stilles Verweilen', chant:'…',
+    narration:null, dur:60, posture:'p-still' },
+  { key:'finalded', name:'Abschließende Widmung', label:'Widmung an alle Wesen', chant:'Final dedication',
+    narration:'May this digital space remind people of compassion. May any good that arises from it be dedicated to the well-being and liberation of all sentient beings.',
+    dur:60, posture:'p-sit' },
+];
+const CYCLE_SEC = PHASES.reduce((a, p) => a + p.dur, 0);
+
+/* ---------------- Zustand ---------------- */
+let currentPhase = 0;
+let phaseStart = performance.now();
+let selectedId = null;
+let listening = false;
+let offsetTimers = new Map();   // Cohort-Versätze: id -> timeout
+const prefs = loadPrefs();
+
+function loadPrefs() {
+  let p = { bubbles: false, calm: matchMedia('(prefers-reduced-motion: reduce)').matches };
+  try { const raw = localStorage.getItem('mm_demo_prefs'); if (raw) p = Object.assign(p, JSON.parse(raw)); } catch (e) {}
+  return p;
+}
+function savePrefs() { try { localStorage.setItem('mm_demo_prefs', JSON.stringify(prefs)); } catch (e) {} }
+
+/* =========================================================
+   Klang – dezente, synthetische Demo-Atmosphäre
+   (Web Audio; startet ausschließlich durch Auswählen von „Zuhören“,
+   stoppt bei verborgenem Dokument; ersetzt keine Rezitation)
+   ========================================================= */
+let AC = null, master = null, focusBus = null, focusPan = null, bgBus = null;
+let droneNodes = [], bgVoices = [];
+
+function ensureAudio() {
+  if (AC) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  AC = new Ctx();
+
+  master = AC.createGain();
+  master.gain.value = 0;
+  master.connect(AC.destination);
+
+  /* Fokusbus: die gewählte Stimme, vorn, nach Sitzposition verteilt */
+  focusPan = AC.createStereoPanner();
+  focusBus = AC.createGain();
+  focusBus.gain.value = 0.9;
+  focusBus.connect(focusPan); focusPan.connect(master);
+
+  /* Hintergrundbus: 12 leise Quellen, gemeinsam tiefpassgefiltert (Sparstufe) */
+  const bgLowpass = AC.createBiquadFilter();
+  bgLowpass.type = 'lowpass'; bgLowpass.frequency.value = 1800; bgLowpass.Q.value = 0.4;
+  bgBus = AC.createGain();
+  bgBus.gain.value = 1;
+  bgBus.connect(bgLowpass); bgLowpass.connect(master);
+
+  /* Grundton: sehr leiser, warmer Drone (D2 + verstimmtes Duplikat) */
+  const droneGain = AC.createGain();
+  droneGain.gain.value = 0.05;
+  droneGain.connect(master);
+  [73.42, 73.7, 146.9].forEach((f, i) => {
+    const o = AC.createOscillator();
+    o.type = i === 2 ? 'triangle' : 'sine';
+    o.frequency.value = f;
+    const g = AC.createGain();
+    g.gain.value = i === 2 ? 0.22 : 0.5;
+    o.connect(g); g.connect(droneGain);
+    o.start();
+    droneNodes.push({ osc: o, gain: g });
+  });
+  /* Sehr langsames Schwelen des Drones (≈ Atemrhythmus, 11 s) */
+  const lfo = AC.createOscillator(); lfo.frequency.value = 1 / 11;
+  const lfoGain = AC.createGain(); lfoGain.gain.value = 0.02;
+  lfo.connect(lfoGain); lfoGain.connect(droneGain.gain);
+  lfo.start();
+
+  /* Fokuslage: wärmere Oktave/Quinte über dem Drone */
+  const focusGain = AC.createGain(); focusGain.gain.value = 0.045;
+  focusGain.connect(focusBus);
+  [164.81, 220.0].forEach(f => {
+    const o = AC.createOscillator();
+    o.type = 'sine'; o.frequency.value = f;
+    o.connect(focusGain); o.start();
+    droneNodes.push({ osc: o, gain: focusGain });
+  });
+
+  /* Hintergrund: 12 Stimmen, verteilt nach Sitzspalte, je eigenes Schwellen */
+  for (let i = 0; i < 12; i++) {
+    const pan = AC.createStereoPanner();
+    pan.pan.value = -0.75 + (i / 11) * 1.5;
+    const g = AC.createGain();
+    g.gain.value = 0.0035;
+    const o = AC.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = 110 * (1 + (hash(i + 400) - 0.5) * 0.02);
+    o.connect(g); g.connect(pan); pan.connect(bgBus);
+    const sw = AC.createOscillator();
+    sw.frequency.value = 0.02 + hash(i + 800) * 0.03;   // 0,02–0,05 Hz
+    const swG = AC.createGain(); swG.gain.value = 0.0028;
+    sw.connect(swG); swG.connect(g.gain);
+    o.start(); sw.start();
+    bgVoices.push({ osc: o, sw });
+  }
+}
+
+/* Kleine Tempelglocke bei Abschnittswechsel (nur wenn ausgehört) */
+function strikeBell() {
+  if (!AC || !listening) return;
+  const t = AC.currentTime;
+  const base = AC.createGain();
+  base.gain.setValueAtTime(0.055, t);
+  base.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+  base.connect(master);
+  [[880, 0.5], [1320, 0.3], [1760, 0.16], [2350, 0.06]].forEach(([f, a]) => {
+    const o = AC.createOscillator();
+    o.type = 'sine'; o.frequency.value = f;
+    o.detune.value = (hash(Math.round(f)) - 0.5) * 8;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(a, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+    o.connect(g); g.connect(base);
+    o.start(t + 0.002); o.stop(t + 3.3);
+  });
+}
+
+/* Sehr leiser Puls je Mani-Einheit (8 s) */
+function strikeUnitPulse() {
+  if (!AC || !listening) return;
+  const t = AC.currentTime;
+  const o = AC.createOscillator();
+  o.type = 'sine'; o.frequency.setValueAtTime(98, t);
+  o.frequency.exponentialRampToValueAtTime(72, t + 0.25);
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.035, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 0.55);
+}
+
+async function startListening() {
+  ensureAudio();
+  if (AC.state === 'suspended') await AC.resume();
+  const t = AC.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), t);
+  master.gain.linearRampToValueAtTime(parseFloat(volMain.value), t + 1.2);
+}
+function stopListening() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0.0001, t + 0.55);
+}
+
+/* ---------------- Aufbau des Raums ---------------- */
+const svg = document.getElementById('raumSvg');
+const NS = 'http://www.w3.org/2000/svg';
+const sitzeGroup = document.getElementById('sitzeGroup');
+const seats = [];
+
+function rowY(r) { return 700 - 52 * r + 1.3 * r * r; }
+function colW(r) { return 78 - 1.9 * r; }
+function colX(r, c) {
+  const w = colW(r);
+  const d = (c < 6 ? (6 - c - 0.5) : (c - 5.5)) * w;
+  const side = c < 6 ? -1 : 1;
+  return 550 + side * (d + AISLE / 2);
+}
+function scaleOf(r) { return 1 - 0.028 * r; }
+function robeFill(r, id) {
+  const jitter = (hash(id + 60) - 0.5) * 3;
+  const L = 30 + (8 - r) * 0.75 + (hash(id + 20) - 0.5) * 2 + jitter * 0.4;
+  const C = 0.055 + (hash(id + 40) - 0.5) * 0.012;
+  const H = 26 + (hash(id + 80) - 0.5) * 6;
+  return `oklch(${L.toFixed(1)}% ${C.toFixed(3)} ${H.toFixed(1)})`;
+}
+
+/* Reihen hinten zuerst zeichnen: vordere Reihen malen sich darüber
+   (richtige Tiefenstaffelung, Aktivitäts-Chips bleiben lesbar) */
+for (let rr = 0; rr < ROWS; rr++) {
+  const r = ROWS - 1 - rr;
+  for (let c = 0; c < COLS; c++) {
+    const id = r * COLS + c + 1;
+    const cx = colX(r, c), cy = rowY(r), s = scaleOf(r);
+
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'sitz p-sit');
+    g.setAttribute('data-id', id);
+    g.setAttribute('data-r', r);
+    g.setAttribute('data-c', c);
+    g.setAttribute('tabindex', id === 1 ? '0' : '-1');
+    g.setAttribute('role', 'button');
+    g.setAttribute('aria-label', `Mönch ${id}, Reihe ${r + 1}, Platz ${c + 1}`);
+
+    /* Auswahlscheine */
+    const halo = document.createElementNS(NS, 'ellipse');
+    halo.setAttribute('class', 'halo');
+    halo.setAttribute('cx', cx); halo.setAttribute('cy', cy - 14 * s);
+    halo.setAttribute('rx', 26 * s + 12); halo.setAttribute('ry', 32 * s + 14);
+    halo.setAttribute('fill', 'url(#haloGrad)');
+    halo.setAttribute('stroke', 'oklch(84% 0.11 85)');
+    halo.setAttribute('stroke-width', '1.2');
+    halo.setAttribute('stroke-dasharray', '5 4');
+    g.appendChild(halo);
+
+    /* Sitzkissen */
+    const cushion = document.createElementNS(NS, 'ellipse');
+    cushion.setAttribute('cx', cx); cushion.setAttribute('cy', cy + 5 * s);
+    cushion.setAttribute('rx', 20 * s); cushion.setAttribute('ry', 7 * s);
+    cushion.setAttribute('fill', 'oklch(28% 0.055 32)');
+    cushion.setAttribute('stroke', 'oklch(18% 0.04 30)');
+    cushion.setAttribute('stroke-width', '0.8');
+    g.appendChild(cushion);
+
+    /* Figur: Atmungsgruppe */
+    const m = document.createElementNS(NS, 'g');
+    m.setAttribute('class', 'm');
+    m.style.setProperty('--dur', (7.2 + hash(id + 100) * 1.9).toFixed(2) + 's');
+    m.style.setProperty('--del', (hash(id + 140) * 3).toFixed(2) + 's');
+    m.style.setProperty('--amp', (1.15 + 0.5 * hash(id + 180)).toFixed(2));
+
+    /* Robe (von hinten gesehen) */
+    const robe = document.createElementNS(NS, 'path');
+    const rx = 13.5 * s, ry = 17.5 * s, bx = cx - rx, by = cy - 4 * s;
+    robe.setAttribute('d',
+      `M ${cx} ${by - ry} C ${cx + rx} ${by - ry} ${cx + rx} ${by + ry} ${cx} ${by + ry}` +
+      ` C ${cx - rx} ${by + ry} ${cx - rx} ${by - ry} ${cx} ${by - ry} Z`);
+    robe.setAttribute('class', 'robe');
+    robe.setAttribute('fill', robeFill(r, id));
+    robe.setAttribute('stroke', 'oklch(14% 0.03 30)');
+    robe.setAttribute('stroke-width', '0.9');
+    m.appendChild(robe);
+
+    /* Faltenlicht oben (Butterlampen vom Altar) */
+    const fold = document.createElementNS(NS, 'path');
+    fold.setAttribute('d',
+      `M ${cx - rx * 0.72} ${cy - 6 * s} C ${cx - rx * 0.3} ${cy - 10 * s} ${cx + rx * 0.3} ${cy - 10 * s} ${cx + rx * 0.72} ${cy - 6 * s}`);
+    fold.setAttribute('fill', 'none');
+    fold.setAttribute('stroke', 'oklch(72% 0.12 78)');
+    fold.setAttribute('stroke-width', '1');
+    fold.setAttribute('opacity', (0.16 + 0.06 * (1 - r / 8)).toFixed(2));
+    m.appendChild(fold);
+
+    /* Kopf */
+    const headG = document.createElementNS(NS, 'g');
+    headG.setAttribute('class', 'head');
+    const head = document.createElementNS(NS, 'circle');
+    head.setAttribute('cx', cx); head.setAttribute('cy', cy - 23 * s);
+    head.setAttribute('r', 8.2 * s);
+    head.setAttribute('fill', `oklch(${(46 + (hash(id + 50) - 0.5) * 6).toFixed(1)}% 0.035 58)`);
+    head.setAttribute('stroke', 'oklch(20% 0.025 52)');
+    head.setAttribute('stroke-width', '0.8');
+    const headLight = document.createElementNS(NS, 'path');
+    headLight.setAttribute('d',
+      `M ${cx - 4.5 * s} ${cy - 28.5 * s} a ${5.5 * s} ${5.5 * s} 0 0 1 ${9 * s} 0`);
+    headLight.setAttribute('fill', 'none');
+    headLight.setAttribute('stroke', 'oklch(88% 0.08 82)');
+    headLight.setAttribute('stroke-width', '1.1');
+    headLight.setAttribute('opacity', (0.28 + 0.1 * (1 - r / 8)).toFixed(2));
+    headG.appendChild(head); headG.appendChild(headLight);
+    m.appendChild(headG);
+
+    /* Opferschale (nur im Darbringungs-Glied sichtbar) */
+    const bowl = document.createElementNS(NS, 'g');
+    bowl.setAttribute('class', 'bowl');
+    const bowlE = document.createElementNS(NS, 'ellipse');
+    bowlE.setAttribute('cx', cx); bowlE.setAttribute('cy', cy - 2 * s);
+    bowlE.setAttribute('rx', 4.6 * s); bowlE.setAttribute('ry', 2.4 * s);
+    bowlE.setAttribute('fill', 'oklch(66% 0.1 72)');
+    bowlE.setAttribute('stroke', 'oklch(40% 0.07 60)');
+    bowlE.setAttribute('stroke-width', '0.7');
+    const stem = document.createElementNS(NS, 'path');
+    stem.setAttribute('d', `M ${cx - 3.2 * s} ${cy - 2 * s} h ${6.4 * s}`);
+    stem.setAttribute('stroke', 'oklch(30% 0.04 50)');
+    stem.setAttribute('stroke-width', '0.8');
+    bowl.appendChild(bowlE); bowl.appendChild(stem);
+    m.appendChild(bowl);
+
+    g.appendChild(m);
+
+    /* Sprechblase: Zeiger zur Figur, natürliche, seed-stabile Streuung */
+    const jx = (hash(id + 220) - 0.5) * 12;      /* ±6 px seitlich */
+    const jy = (hash(id + 240) - 0.5) * 8;       /* ±4 px Höhe */
+    const jrot = (hash(id + 280) - 0.5) * 7;     /* ±3.5° Neigung */
+    const tf = (hash(id + 260) - 0.5) * 24;      /* Zeiger seitlich versetzt */
+    const chip = document.createElementNS(NS, 'g');
+    chip.setAttribute('class', 'chip');
+    chip.setAttribute('transform',
+      `translate(${(cx + jx).toFixed(1)} ${(cy - 26 * s - 16 + jy).toFixed(1)}) rotate(${jrot.toFixed(2)})`);
+    const chipInner = document.createElementNS(NS, 'g');
+    chipInner.setAttribute('class', 'chip-inner');
+    chipInner.style.setProperty('--d', (hash(id + 320) * 240).toFixed(0) + 'ms');
+    const chipBg = document.createElementNS(NS, 'path');
+    chipBg.setAttribute('class', 'chip-bg');
+    const chipTx = document.createElementNS(NS, 'text');
+    chipTx.setAttribute('y', '0.5');
+    chipTx.setAttribute('dominant-baseline', 'central');
+    chipTx.textContent = '';
+    chipInner.appendChild(chipBg); chipInner.appendChild(chipTx);
+    chip.appendChild(chipInner);
+    g.appendChild(chip);
+
+    g.addEventListener('click', () => selectMonk(id));
+    g.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMonk(id); }
+    });
+
+    sitzeGroup.appendChild(g);
+    seats.push({ id, r, c, g, chipTx, chipBg, tf });
+  }
+}
+
+/* Zugriff über Mönch-ID unabhängig von der Zeichnungsreihenfolge halten */
+seats.sort((a, b) => a.id - b.id);
+
+/* Sprechblase: Rahmen mit herabhängendem Zeiger als ein Pfad */
+function bubblePath(w, tf) {
+  const x0 = -w / 2, x1 = w / 2, r = 7, top = -9, bot = 7;
+  return 'M ' + (x0 + r).toFixed(1) + ' ' + top +
+    ' H ' + (x1 - r).toFixed(1) + ' Q ' + x1.toFixed(1) + ' ' + top + ' ' + x1.toFixed(1) + ' ' + (top + r) +
+    ' V ' + (bot - r) + ' Q ' + x1.toFixed(1) + ' ' + bot + ' ' + (x1 - r).toFixed(1) + ' ' + bot +
+    ' H ' + (tf + 4).toFixed(1) + ' L ' + tf.toFixed(1) + ' 13.5 L ' + (tf - 4).toFixed(1) + ' ' + bot +
+    ' H ' + (x0 + r).toFixed(1) + ' Q ' + x0.toFixed(1) + ' ' + bot + ' ' + x0.toFixed(1) + ' ' + (bot - r) +
+    ' V ' + (top + r) + ' Q ' + x0.toFixed(1) + ' ' + top + ' ' + (x0 + r).toFixed(1) + ' ' + top + ' Z';
+}
+function chipTextWidth(text) { return Math.max(46, text.length * 5.2 + 16); }
+function applyChipText(seat, text) {
+  seat.chipTx.textContent = text;
+  seat.chipBg.setAttribute('d', bubblePath(chipTextWidth(text), seat.tf));
+}
+
+/* Cohort-Welle: Der Sprechblasentext wechselt mit dem stabilen
+   Startversatz der jeweiligen Figur (0–1200 ms) – kein Zufall je Frame. */
+const chipTimers = new Map();
+function updateChipTexts(phase) {
+  chipTimers.forEach(t => clearTimeout(t));
+  chipTimers.clear();
+  seats.forEach(seat => {
+    if (!prefs.bubbles) { applyChipText(seat, phase.chant); return; }
+    const delay = seat.id === 1 ? 0 : Math.floor(hash(seat.id + 7) * SPREAD_MS);
+    if (delay === 0) { applyChipText(seat, phase.chant); return; }
+    const t = setTimeout(() => {
+      applyChipText(seat, phase.chant);
+      chipTimers.delete(seat.id);
+    }, delay);
+    chipTimers.set(seat.id, t);
+  });
+}
+
+/* =========================================================
+   Auswahl, Cohort-Versätze, Abschnitte
+   ========================================================= */
+const el = {
+  phaseName: document.getElementById('phaseName'),
+  chantPill: document.getElementById('chantPill'),
+  timer: document.getElementById('timer'),
+  maniUnits: document.getElementById('maniUnits'),
+  cycleFill: document.getElementById('cycleFill'),
+  panelTitle: document.getElementById('panelTitle'),
+  seatTag: document.getElementById('seatTag'),
+  panelMulti: document.getElementById('panelMulti'),
+  panelChant: document.getElementById('panelChant'),
+  narration: document.getElementById('narration'),
+  narrSrc: document.getElementById('narrSrc'),
+};
+
+function clearOffsets() {
+  offsetTimers.forEach(t => clearTimeout(t));
+  offsetTimers.clear();
+}
+
+function applyPosture(posture) {
+  /* Cohort-Versätze: stabile 0–1200 ms je Figur (erster Mönch 0).
+     Rückkehr zum ruhigen Sitzen wirkt gemeinsam; besondere Gesten
+     setzen mit dem individuellen Versatz ein. */
+  clearOffsets();
+  seats.forEach(seat => {
+    seat.g.classList.remove('p-sit', 'p-bow', 'p-prost', 'p-off', 'p-low', 'p-still');
+    const delay = seat.id === 1 ? 0 : Math.floor(hash(seat.id + 7) * SPREAD_MS);
+    if (delay === 0 || posture === 'p-sit') {
+      seat.g.classList.add(posture);
+    } else {
+      const t = setTimeout(() => {
+        seat.g.classList.add(posture);
+        offsetTimers.delete(seat.id);
+      }, delay);
+      offsetTimers.set(seat.id, t);
+    }
+  });
+}
+
+function setPhase(index, opts) {
+  currentPhase = (index + PHASES.length) % PHASES.length;
+  phaseStart = performance.now();
+  const p = PHASES[currentPhase];
+
+  el.phaseName.textContent = p.name;
+  el.phaseName.classList.remove('swap');
+  void el.phaseName.offsetWidth;
+  el.phaseName.classList.add('swap');
+  el.chantPill.textContent = p.chant;
+
+  el.maniUnits.classList.toggle('hidden', !p.unitSec);
+  if (p.unitSec) el.maniUnits.textContent = 'Einheit 1 / ' + p.units;
+
+  if (!opts || !opts.silent) {
+    strikeBell();
+    applyPosture(p.posture);
+  }
+  updateChipTexts(p);
+  renderMonkPanel();
+}
+
+function fmt(sec) {
+  sec = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+/* Takt: Zeit läuft kontinuierlich; Audio nur nach ausdrücklichem „Zuhören“ */
+let lastUnit = -1;
+function tick() {
+  const p = PHASES[currentPhase];
+  const elapsed = (performance.now() - phaseStart) / 1000;
+  const remaining = p.dur - elapsed;
+
+  el.timer.textContent = fmt(remaining);
+
+  if (p.unitSec) {
+    const unit = Math.min(p.units, Math.floor(elapsed / p.unitSec) + 1);
+    if (unit !== lastUnit) {
+      lastUnit = unit;
+      el.maniUnits.textContent = 'Einheit ' + unit + ' / ' + p.units;
+      if (unit > 1) strikeUnitPulse();
+    }
+  }
+
+  const before = PHASES.slice(0, currentPhase).reduce((a, q) => a + q.dur, 0);
+  el.cycleFill.style.width = (Math.min(100, ((before + Math.min(elapsed, p.dur)) / CYCLE_SEC) * 100)).toFixed(2) + '%';
+
+  if (remaining <= 0) {
+    lastUnit = -1;
+    setPhase(currentPhase + 1);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------------- Mönchsauswahl ---------------- */
+function selectMonk(id, opts) {
+  selectedId = id;
+  seats.forEach(s => {
+    const on = s.id === id;
+    s.g.classList.toggle('selected', on);
+    s.g.setAttribute('aria-pressed', on ? 'true' : 'false');
+    s.g.setAttribute('tabindex', on ? '0' : '-1');
+    if (on) s.g.setAttribute('aria-label', `Mönch ${id}, Reihe ${Math.ceil(id / COLS)}, Platz ${(id - 1) % COLS + 1}, ausgewählt`);
+  });
+  const seat = seats[id - 1];
+  if (seat) seat.g.focus({ preventScroll: true });
+  renderMonkPanel();
+  if (AC && listening && focusPan) {
+    const t = AC.currentTime;
+    const panTarget = ((seat.c + 0.5) / COLS - 0.5) * 1.4;
+    focusPan.pan.setTargetAtTime(panTarget, t, 0.4);
+    focusBus.gain.setTargetAtTime(0.9, t, 0.3);
+  }
+}
+
+function renderMonkPanel() {
+  const p = PHASES[currentPhase];
+  if (selectedId == null) {
+    el.panelTitle.textContent = 'Sitzplatz auswählen';
+    el.seatTag.textContent = '—';
+    el.panelMulti.textContent = 'Einen Platz im Raum anklicken – oder die Pfeiltasten benutzen.';
+    el.panelChant.classList.add('hidden');
+    el.narration.classList.add('hidden');
+    el.narrSrc.textContent = '';
+    return;
+  }
+  const r = Math.ceil(selectedId / COLS), c = (selectedId - 1) % COLS + 1;
+  el.panelTitle.textContent = `Mönch ${selectedId}`;
+  el.seatTag.textContent = `Reihe ${r} · Platz ${c}`;
+  el.panelMulti.textContent = `${p.name} — ${p.label}`;
+  el.panelChant.textContent = p.chant;
+  el.panelChant.classList.remove('hidden');
+  if (p.narration) {
+    el.narration.textContent = '„' + p.narration + '“';
+    el.narration.classList.remove('hidden');
+    el.narrSrc.textContent = 'Redaktionelle Begleitung (EN) – für eine geprüfte Aufnahme vorgesehen.';
+  } else if (p.hint) {
+    el.narration.classList.add('hidden');
+    el.narrSrc.textContent = p.hint;
+  } else {
+    el.narration.classList.add('hidden');
+    el.narrSrc.textContent = p.key === 'stilistill' ? 'Innere Stille – dieser Abschnitt bleibt ohne Begleitung.' : '';
+  }
+}
+
+/* ---------------- Steuerung ---------------- */
+const btnListen = document.getElementById('btnListen');
+const listenLabel = document.getElementById('listenLabel');
+const volMain = document.getElementById('volMain');
+const volBg = document.getElementById('volBg');
+const volMainVal = document.getElementById('volMainVal');
+const volBgVal = document.getElementById('volBgVal');
+const toggleBubbles = document.getElementById('toggleBubbles');
+const toggleCalm = document.getElementById('toggleCalm');
+const panel = document.getElementById('panel');
+const panelFab = document.getElementById('panelFab');
+const main = document.getElementById('main');
+const btnEnlarge = document.getElementById('btnEnlarge');
+
+btnListen.addEventListener('click', () => {
+  listening = !listening;
+  btnListen.setAttribute('aria-pressed', listening ? 'true' : 'false');
+  btnListen.classList.toggle('on', listening);
+  listenLabel.textContent = listening ? 'Ausblenden' : 'Zuhören';
+  if (listening) { strikeBell(); startListening(); }
+  else stopListening();
+});
+
+volMain.addEventListener('input', () => {
+  volMainVal.textContent = Math.round(volMain.value * 100);
+  if (AC && listening) master.gain.setTargetAtTime(parseFloat(volMain.value), AC.currentTime, 0.08);
+});
+volBg.addEventListener('input', () => {
+  volBgVal.textContent = Math.round(volBg.value * 100);
+  if (AC && bgBus) bgBus.gain.setTargetAtTime(parseFloat(volBg.value), AC.currentTime, 0.08);
+});
+
+toggleBubbles.addEventListener('change', () => {
+  prefs.bubbles = toggleBubbles.checked;
+  savePrefs();
+  document.documentElement.classList.toggle('show-chips', prefs.bubbles);
+});
+toggleCalm.addEventListener('change', () => {
+  prefs.calm = toggleCalm.checked;
+  savePrefs();
+  document.documentElement.classList.toggle('calm', prefs.calm);
+});
+
+/* Mönch vor/zurück (auch für Mobil ohne Raumscroll) */
+document.getElementById('monkPrev').addEventListener('click', () => selectMonkWrap(-1));
+document.getElementById('monkNext').addEventListener('click', () => selectMonkWrap(1));
+function selectMonkWrap(d) {
+  const id = selectedId == null ? (d > 0 ? 1 : TOTAL) : ((selectedId - 1 + d + TOTAL) % TOTAL) + 1;
+  selectMonk(id, {});
+}
+
+/* Demo-Abschnittskontrolle */
+document.getElementById('phasePrev').addEventListener('click', () => { lastUnit = -1; setPhase(currentPhase - 1); });
+document.getElementById('phaseNext').addEventListener('click', () => { lastUnit = -1; setPhase(currentPhase + 1); });
+
+/* Raum vergrößern */
+function setEnlarged(on) {
+  main.classList.toggle('enlarged', on);
+  btnEnlarge.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btnEnlarge.textContent = on ? 'Ansicht zurückkehren' : 'Raum vergrößern';
+  document.getElementById('exitEnlarge').setAttribute('aria-expanded', on ? 'true' : 'false');
+}
+btnEnlarge.addEventListener('click', () => setEnlarged(!main.classList.contains('enlarged')));
+document.getElementById('exitEnlarge').addEventListener('click', () => setEnlarged(false));
+
+/* Mobiles Panel */
+panelFab.addEventListener('click', () => panel.classList.toggle('open'));
+panel.addEventListener('click', (e) => {
+  if (e.target.classList.contains('sheet-grip')) panel.classList.remove('open');
+});
+panel.addEventListener('keydown', (e) => {
+  if (e.target.classList.contains('sheet-grip') && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    panel.classList.remove('open');
+  }
+});
+
+/* Tastatur: Pfeile = Mönchsraster, Leertaste = Zuhören, Escape = zurück.
+   Eingaben im Panel (Regler, Knöpfe) behalten ihr natives Verhalten. */
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (main.classList.contains('enlarged')) { btnEnlarge.click(); return; }
+    if (panel.classList.contains('open')) { panel.classList.remove('open'); return; }
+  }
+  const t = e.target;
+  const isSeat = t.classList && t.classList.contains('sitz');
+  const isRoom = t === document.body ||
+    (t.closest && (t.closest('.raum-wrapper') || t.closest('header')));
+  if (!isSeat && !isRoom) return;
+  if (e.key === ' ' && !isSeat) { e.preventDefault(); btnListen.click(); return; }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (selectedId == null) { selectMonk(1); return; }
+    const seat = seats[selectedId - 1];
+    let nc = seat.c, nr = seat.r;
+    if (e.key === 'ArrowLeft') nc = Math.max(0, seat.c - 1);
+    if (e.key === 'ArrowRight') nc = Math.min(COLS - 1, seat.c + 1);
+    if (e.key === 'ArrowUp') nr = Math.max(0, seat.r - 1);
+    if (e.key === 'ArrowDown') nr = Math.min(ROWS - 1, seat.r + 1);
+    selectMonk(nr * COLS + nc + 1);
+  }
+});
+
+/* Verdecktes Dokument stoppt den Demo-Klang (Spezifikation) */
+document.addEventListener('visibilitychange', () => {
+  if (!AC) return;
+  if (document.hidden && listening) AC.suspend();
+  else if (!document.hidden && listening) AC.resume();
+});
+
+/* ---------------- Mala (lokal) ---------------- */
+const malaKey = 'meditatingmonks_mala_v1';
+let malaCount = 0;
+try { malaCount = parseInt(localStorage.getItem(malaKey) || '0', 10) || 0; } catch (e) {}
+const malaEl = document.getElementById('malaCount');
+malaEl.textContent = malaCount;
+document.getElementById('malaPlus').addEventListener('click', () => {
+  malaCount++;
+  malaEl.textContent = malaCount;
+  try { localStorage.setItem(malaKey, String(malaCount)); } catch (e) {}
+});
+document.getElementById('malaReset').addEventListener('click', () => {
+  malaCount = 0;
+  malaEl.textContent = '0';
+  try { localStorage.setItem(malaKey, '0'); } catch (e) {}
+});
+
+/* ---------------- Start ---------------- */
+toggleBubbles.checked = !!prefs.bubbles;
+toggleCalm.checked = !!prefs.calm;
+document.documentElement.classList.toggle('show-chips', !!prefs.bubbles);
+document.documentElement.classList.toggle('calm', !!prefs.calm);
+setPhase(0, { silent: true });
+requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "longchen-nyingtik-outline",
+  "revision": 1,
+  "title": "Longchen Nyingtik · Strukturvorlage",
+  "status": "outline-only",
+  "tradition": "Longchen Nyingtik; Struktur nach Jamyang Khyentse Wangpo",
+  "classification": "Nicht ausführbare Strukturvorlage. Keine vollständige Liturgie und keine Praxisfreigabe.",
+  "content_license": "AGPL-3.0-only für eigene redaktionelle Texte; Quellen nur verlinkt.",
+  "reviewed_by": "",
+  "access_note": "Vor Aktivierung: genaue Fassung, Text-/Audiorechte, Anforderungen der Linie und sachkundige Durchsicht dokumentieren. Kein pauschales Urteil über die Voraussetzungen einzelner Mantras.",
+  "sources": [
+    {
+      "title": "Jamyang Khyentse Wangpo: Illuminating the Excellent Path to Omniscience",
+      "url": "https://www.lotsawahouse.org/tibetan-masters/jamyang-khyentse-wangpo/illuminating-excellent-path",
+      "note": "Struktureller Vergleich; diese öffentliche Komposition ist NICHT die Longchen-Nyingtik-Liturgie."
+    }
+  ],
+  "phases": [
+    {
+      "id": "preparation",
+      "label": "Vorbereitung gemäß gewählter Fassung",
+      "kind": "settle",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "outer",
+      "label": "Äußere vorbereitende Übungen",
+      "kind": "contemplation",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "refuge",
+      "label": "Zuflucht mit Niederwerfungen",
+      "kind": "refuge",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "bodhicitta",
+      "label": "Bodhicitta",
+      "kind": "bodhicitta",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "vajrasattva",
+      "label": "Vajrasattva",
+      "kind": "purification",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "mandala",
+      "label": "Maṇḍala-Darbringung",
+      "kind": "offering",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "kusali",
+      "label": "Kusāli / Chö – gemäß Fassung und Anleitung",
+      "kind": "offering",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "guru-yoga",
+      "label": "Guru-Yoga einschließlich seiner Untergliederung",
+      "kind": "guru-yoga",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    },
+    {
+      "id": "dedication",
+      "label": "Widmung / Abschluss gemäß Fassung",
+      "kind": "dedication",
+      "duration_ms": 60000,
+      "text": "Strukturplatzhalter. Verifizierten, zur Verwendung berechtigten Praxistext und die zugehörige Anleitung hinterlegen.",
+      "notes": "Zeitangabe ausschließlich Schema-Platzhalter; nicht als traditionelle Praxisdauer gemeint."
+    }
+  ]
+}

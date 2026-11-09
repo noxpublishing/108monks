@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "id": "public-compassion",
+  "revision": 1,
+  "title": "Zyklus des Mitgefühls",
+  "status": "ready",
+  "tradition": "Zeitgenössische, tibetisch-buddhistisch inspirierte Komposition",
+  "classification": "Öffentlicher digitaler Erinnerungs- und Rezitationsraum. Keine überlieferte Sādhana, kein vollständiges Ngöndro, keine formelle Ansammlung.",
+  "content_license": "AGPL-3.0-only für eigene redaktionelle Texte; Quellen nur verlinkt.",
+  "reviewed_by": "Keine Linienfreigabe behauptet. Redaktioneller Prototyp.",
+  "access_note": "Die Figuren sind digitale Darstellungen, keine ordinierten oder bewussten Praktizierenden. Menschliche Praxis wird nicht ersetzt.",
+  "sources": [
+    {
+      "title": "Jamyang Khyentse Wangpo: Illuminating the Excellent Path to Omniscience",
+      "url": "https://www.lotsawahouse.org/tibetan-masters/jamyang-khyentse-wangpo/illuminating-excellent-path",
+      "note": "Struktureller Vergleich; diese öffentliche Komposition ist NICHT die Longchen-Nyingtik-Liturgie."
+    },
+    {
+      "title": "Lotsawa House: Seven Branches",
+      "url": "https://www.lotsawahouse.org/topics/seven-branches/",
+      "note": "Belegt die sieben Glieder; keine Übersetzung übernommen."
+    },
+    {
+      "title": "Office of the Dalai Lama: Joining the Mani Dhungdrub, 11 May 2024",
+      "url": "https://www.dalailama.com/news/2024/joining-the-mani-dhungdrub-the-recitation-of-om-mani-padme-hung",
+      "note": "Öffentliche Mani-Rezitation; Betonung von Bodhicitta."
+    }
+  ],
+  "phases": [
+    {
+      "id": "arriving",
+      "label": "Ankommen & Ausrichtung",
+      "kind": "settle",
+      "duration_ms": 60000,
+      "text": "Dieser Raum ist dem Wohl aller fühlenden Wesen gewidmet. Wir beginnen mit einer Haltung des Mitgefühls."
+    },
+    {
+      "id": "four-thoughts",
+      "label": "Vier Gedanken",
+      "kind": "contemplation",
+      "duration_ms": 240000,
+      "text": "Ein Moment, um die Ausrichtung zu klären.",
+      "reflections": [
+        "Die Gelegenheit dieses menschlichen Lebens wertschätzen.",
+        "Die Vergänglichkeit aller bedingten Dinge bedenken.",
+        "Die Folgen des eigenen Handelns ernst nehmen.",
+        "Die Unzulänglichkeit eines von Anhaften geprägten Daseins betrachten."
+      ],
+      "notes": "Freie redaktionelle Zusammenfassungen, keine zitierte Liturgie."
+    },
+    {
+      "id": "refuge",
+      "label": "Zuflucht & Niederwerfungen",
+      "kind": "refuge",
+      "duration_ms": 108000,
+      "text": "Zuflucht zu Buddha, Dharma und Sangha. Eine symbolische Verbeugung aus Respekt und Vertrauen.",
+      "unit_ms": 9000,
+      "counter": "prostration",
+      "notes": "Niederwerfungen finden während der Zuflucht statt. Die Bewegung ist eine stilisierte Animation, keine körperliche Praxisanleitung."
+    },
+    {
+      "id": "bodhicitta",
+      "label": "Bodhicitta",
+      "kind": "bodhicitta",
+      "duration_ms": 60000,
+      "text": "Mögen Einsicht und Mitgefühl wachsen, damit wir allen fühlenden Wesen hilfreich sein können."
+    },
+    {
+      "id": "homage",
+      "label": "1 · Ehrerbietung",
+      "kind": "prostration",
+      "duration_ms": 27000,
+      "text": "Wir bringen den Erwachten und ihrem Weg Achtung entgegen.",
+      "unit_ms": 9000,
+      "counter": "prostration"
+    },
+    {
+      "id": "offerings",
+      "label": "2 · Darbringungen",
+      "kind": "offering",
+      "duration_ms": 64000,
+      "text": "Wasser, Blumen, Licht und andere Gaben erscheinen als Zeichen der Großzügigkeit.",
+      "unit_ms": 8000,
+      "counter": "offering",
+      "notes": "Symbolische Darbringungen; keine Konsekration, keine authentifizierte Mandala-Opferliturgie."
+    },
+    {
+      "id": "acknowledgement",
+      "label": "3 · Bekennen",
+      "kind": "reflection",
+      "duration_ms": 30000,
+      "text": "Schädliches Handeln ehrlich anerkennen und sich neu auf hilfreiches Handeln ausrichten."
+    },
+    {
+      "id": "rejoicing",
+      "label": "4 · Mitfreude",
+      "kind": "reflection",
+      "duration_ms": 30000,
+      "text": "Freude über das Gute, das andere und wir selbst bewirken."
+    },
+    {
+      "id": "request-teaching",
+      "label": "5 · Um Lehre bitten",
+      "kind": "reflection",
+      "duration_ms": 30000,
+      "text": "Mögen befreiende Unterweisungen zugänglich bleiben."
+    },
+    {
+      "id": "request-remain",
+      "label": "6 · Um Verbleiben bitten",
+      "kind": "reflection",
+      "duration_ms": 30000,
+      "text": "Mögen weise und mitfühlende Lehrende den Wesen weiterhin beistehen."
+    },
+    {
+      "id": "preliminary-dedication",
+      "label": "7 · Widmen",
+      "kind": "dedication",
+      "duration_ms": 30000,
+      "text": "Möge alles Heilsame dem Erwachen aller Wesen dienen."
+    },
+    {
+      "id": "mani",
+      "label": "Mani-Rezitation",
+      "kind": "mantra",
+      "duration_ms": 359856,
+      "text": "Oṃ maṇi padme hūṃ",
+      "tibetan": "ཨོཾ་མ་ཎི་པདྨེ་ཧཱུྃ།",
+      "speech_text": "Om mani padme hum",
+      "audio_id": "mani",
+      "unit_ms": 3332,
+      "counter": "mantra",
+      "notes": "108 digitale Wiederholungen im Takt der geprüften Aufnahme (3,332 s je vollständiger Rezitation, Take v02, an Stille-Grenzen getrimmt). Das ist eine technische Einstellung, kein Maß für spirituelles Verdienst. Kein Time-Stretching, keine Tonhöhenänderung."
+    },
+    {
+      "id": "quiet",
+      "label": "Stilles Verweilen",
+      "kind": "rest",
+      "duration_ms": 60000,
+      "text": "Ein stiller Übergang, ohne zusätzliche Worte."
+    },
+    {
+      "id": "dedication",
+      "label": "Abschließende Widmung",
+      "kind": "dedication",
+      "duration_ms": 60000,
+      "text": "Möge dieser digitale Raum Menschen an Mitgefühl erinnern. Möge alles dadurch entstehende Heilsame dem Wohl und der Befreiung aller fühlenden Wesen dienen."
+    }
+  ]
+}

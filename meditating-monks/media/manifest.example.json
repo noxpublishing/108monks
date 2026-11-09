@@ -1,0 +1,13 @@
+[
+  {
+    "id": "mani",
+    "file": "mani-authorized.wav",
+    "title": "Titel deiner tatsächlich freigegebenen Aufnahme",
+    "performer": "Tatsächlicher Name oder vereinbarte Attribution",
+    "license": "Tatsächliche Lizenz oder schriftliche Erlaubnis",
+    "permission_note": "Freigabe für Web-Wiedergabe, Looping und gegebenenfalls geschichtete Wiedergabe dokumentieren.",
+    "language": "Sanskrit, tibetische Rezitationsweise",
+    "loop_start_seconds": 0,
+    "loop_end_seconds": 8
+  }
+]

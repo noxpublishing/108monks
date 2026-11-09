@@ -1,0 +1,15 @@
+{$MM_DOMAIN} {
+    encode zstd gzip
+    request_body {
+        max_size 20KB
+    }
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        -Server
+    }
+    reverse_proxy monastery:8000 {
+        flush_interval -1
+    }
+    # Access logs are intentionally not enabled here.
+    # Infrastructure/provider logs remain the operator's responsibility.
+}
